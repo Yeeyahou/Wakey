@@ -2,7 +2,7 @@ import Foundation
 
 struct LyricsContext {
     let date: Date
-    let nickname: String
+    let nickname: String?
     let purpose: AlarmPurpose
     let memo: String
     let mood: AlarmMood
@@ -23,22 +23,18 @@ struct LyricsGenerator {
 
         let moodLine: String
         switch context.mood {
-        case .energetic:
-            moodLine = "활기차게 몸을 깨워요"
-        case .calm:
-            moodLine = "차분하게 눈을 떠봐요"
-        case .emotional:
-            moodLine = "따뜻한 마음으로 하루를 열어요"
-        case .cute:
-            moodLine = "귀엽게 웃으며 일어나요"
-        case .encouraging:
-            moodLine = "괜찮아요, 오늘도 충분히 잘할 거예요"
         case .exciting:
             moodLine = "신나는 리듬에 맞춰 일어나요"
+        case .soft:
+            moodLine = "잔잔하게 눈을 떠봐요"
+        case .emotional:
+            moodLine = "따뜻한 마음으로 하루를 열어요"
+        case .rock:
+            moodLine = "강한 비트로 몸을 깨워요"
         }
 
         var lines = [
-            "좋은 아침 \(context.nickname)아",
+            context.nickname.map { "좋은 아침 \($0)아" } ?? "좋은 아침이에요",
             "\(dateLine), 햇살이 널 불러",
             weatherLine,
             locationLine,

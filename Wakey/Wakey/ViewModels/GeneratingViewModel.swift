@@ -59,6 +59,40 @@ final class GeneratingViewModel: ObservableObject {
     ) async -> AlarmSong {
         let alarmId = UUID()
 
+        guard draft.useCustomSong else {
+            phase = .scheduling
+            var notificationAudioURL: URL?
+            if let fileName = draft.defaultAlarmSoundFileName {
+                notificationAudioURL = try? await audioFileService.copyBundledAlarmSoundToLibrary(fileName: fileName)
+            }
+            var alarm = AlarmSong(
+                id: alarmId,
+                time: draft.time,
+                date: draft.selectedDate ?? Date(),
+                alarmName: draft.alarmName.isEmpty ? nil : draft.alarmName,
+                purpose: draft.purpose,
+                mood: draft.mood,
+                nickname: draft.nickname,
+                memo: draft.memo,
+                repeatDays: draft.repeatDays,
+                snoozeEnabled: draft.snoozeEnabled,
+                snoozeIntervalMinutes: draft.snoozeIntervalMinutes,
+                snoozeRepeatCount: draft.snoozeRepeatCount,
+                notificationAudioFilePath: notificationAudioURL?.path,
+                createdAt: Date()
+            )
+
+            do {
+                try await notificationService.schedule(alarm)
+            } catch {
+                alarm.isEnabled = false
+                statusDetail = "알림 권한이 없어 알람은 저장했지만 예약하지 못했어요."
+            }
+
+            phase = .completed
+            return alarm
+        }
+
         phase = .gatheringContext
         async let locationSummary = draft.useLocation ? locationService.currentLocationSummary() : nil
         async let location = draft.useWeather ? locationService.currentLocation() : nil
@@ -71,7 +105,7 @@ final class GeneratingViewModel: ObservableObject {
         phase = .generatingLyrics
         let context = LyricsContext(
             date: Date(),
-            nickname: draft.nickname,
+            nickname: draft.includeNameInLyrics ? draft.nickname : nil,
             purpose: draft.purpose,
             memo: draft.memo,
             mood: draft.mood,
@@ -111,12 +145,16 @@ final class GeneratingViewModel: ObservableObject {
         var alarm = AlarmSong(
             id: alarmId,
             time: draft.time,
-            date: Date(),
+            date: draft.selectedDate ?? Date(),
+            alarmName: draft.alarmName.isEmpty ? nil : draft.alarmName,
             purpose: draft.purpose,
             mood: draft.mood,
             nickname: draft.nickname,
             memo: draft.memo,
             repeatDays: draft.repeatDays,
+            snoozeEnabled: draft.snoozeEnabled,
+            snoozeIntervalMinutes: draft.snoozeIntervalMinutes,
+            snoozeRepeatCount: draft.snoozeRepeatCount,
             lyrics: generatedLyrics,
             originalAudioFilePath: originalAudioURL?.path,
             notificationAudioFilePath: notificationAudioURL?.path,

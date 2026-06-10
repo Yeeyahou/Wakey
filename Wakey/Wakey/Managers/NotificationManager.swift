@@ -62,7 +62,7 @@ final class NotificationService: ObservableObject {
 
         let components = Calendar.current.dateComponents([.hour, .minute], from: alarm.time)
         if alarm.repeatDays.isEmpty {
-            var onceComponents = Calendar.current.dateComponents([.year, .month, .day], from: nextFireDate(for: alarm.time))
+            var onceComponents = Calendar.current.dateComponents([.year, .month, .day], from: onceFireDate(for: alarm))
             onceComponents.hour = components.hour
             onceComponents.minute = components.minute
             let trigger = UNCalendarNotificationTrigger(dateMatching: onceComponents, repeats: false)
@@ -87,14 +87,20 @@ final class NotificationService: ObservableObject {
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: identifiers)
     }
 
-    private func nextFireDate(for time: Date) -> Date {
+    private func onceFireDate(for alarm: AlarmSong) -> Date {
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.hour, .minute], from: time)
-        let today = calendar.date(bySettingHour: components.hour ?? 7, minute: components.minute ?? 0, second: 0, of: Date()) ?? Date()
-        if today > Date() {
-            return today
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: alarm.time)
+        let fireDate = calendar.date(
+            bySettingHour: timeComponents.hour ?? 7,
+            minute: timeComponents.minute ?? 0,
+            second: 0,
+            of: alarm.date
+        ) ?? alarm.date
+
+        if fireDate > Date() {
+            return fireDate
         }
-        return calendar.date(byAdding: .day, value: 1, to: today) ?? today
+        return calendar.date(byAdding: .day, value: 1, to: fireDate) ?? fireDate
     }
 
     enum NotificationError: LocalizedError {

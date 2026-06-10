@@ -5,11 +5,15 @@ struct AlarmSong: Identifiable, Codable, Equatable {
     var time: Date
     var date: Date
     var isEnabled: Bool
+    var alarmName: String?
     var purpose: AlarmPurpose
     var mood: AlarmMood
     var nickname: String
     var memo: String
     var repeatDays: Set<Weekday>
+    var snoozeEnabled: Bool?
+    var snoozeIntervalMinutes: Int?
+    var snoozeRepeatCount: Int?
     var lyrics: String?
     var originalAudioFilePath: String?
     var notificationAudioFilePath: String?
@@ -24,11 +28,15 @@ struct AlarmSong: Identifiable, Codable, Equatable {
         time: Date,
         date: Date = Date(),
         isEnabled: Bool = true,
+        alarmName: String? = nil,
         purpose: AlarmPurpose,
         mood: AlarmMood,
         nickname: String,
         memo: String,
         repeatDays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday],
+        snoozeEnabled: Bool? = nil,
+        snoozeIntervalMinutes: Int? = nil,
+        snoozeRepeatCount: Int? = nil,
         lyrics: String? = nil,
         originalAudioFilePath: String? = nil,
         notificationAudioFilePath: String? = nil,
@@ -42,11 +50,15 @@ struct AlarmSong: Identifiable, Codable, Equatable {
         self.time = time
         self.date = date
         self.isEnabled = isEnabled
+        self.alarmName = alarmName
         self.purpose = purpose
         self.mood = mood
         self.nickname = nickname
         self.memo = memo
         self.repeatDays = repeatDays
+        self.snoozeEnabled = snoozeEnabled
+        self.snoozeIntervalMinutes = snoozeIntervalMinutes
+        self.snoozeRepeatCount = snoozeRepeatCount
         self.lyrics = lyrics
         self.originalAudioFilePath = originalAudioFilePath
         self.notificationAudioFilePath = notificationAudioFilePath
@@ -106,14 +118,34 @@ enum AlarmPurpose: String, Codable, CaseIterable, Identifiable {
 }
 
 enum AlarmMood: String, Codable, CaseIterable, Identifiable {
-    case energetic = "활기찬"
-    case calm = "차분한"
-    case emotional = "감성적인"
-    case cute = "귀여운"
-    case encouraging = "응원하는"
     case exciting = "신나는"
+    case soft = "잔잔한"
+    case emotional = "감성적인"
+    case rock = "락"
 
     var id: String { rawValue }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        switch value {
+        case "신나는", "활기찬", "귀여운", "응원하는":
+            self = .exciting
+        case "잔잔한", "차분한":
+            self = .soft
+        case "감성적인":
+            self = .emotional
+        case "락":
+            self = .rock
+        default:
+            self = .exciting
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 enum Weekday: String, Codable, CaseIterable, Identifiable {
@@ -130,10 +162,18 @@ enum Weekday: String, Codable, CaseIterable, Identifiable {
 
 struct AlarmDraft: Equatable {
     var time: Date = .alarmTime(hour: 7, minute: 0)
-    var nickname = "지우"
+    var selectedDate: Date?
+    var alarmName = ""
+    var nickname = WakeyProfile.defaultNickname
+    var includeNameInLyrics = true
+    var useCustomSong = true
+    var defaultAlarmSoundFileName: String?
+    var snoozeEnabled = true
+    var snoozeIntervalMinutes = 5
+    var snoozeRepeatCount: Int? = 3
     var purpose: AlarmPurpose = .wakeup
-    var mood: AlarmMood = .energetic
-    var memo = "오늘도 힘차게 시작하는 하루!"
+    var mood: AlarmMood = .exciting
+    var memo = ""
     var repeatDays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
     var useLocation = false
     var useWeather = true

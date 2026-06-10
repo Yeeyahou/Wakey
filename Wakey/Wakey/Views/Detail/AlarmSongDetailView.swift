@@ -178,7 +178,12 @@ struct AlarmSongDetailView: View {
                 Button {
                     onRegenerate(AlarmDraft(
                         time: alarm.time,
+                        selectedDate: alarm.repeatDays.isEmpty ? alarm.date : nil,
+                        alarmName: alarm.alarmName ?? "",
                         nickname: alarm.nickname,
+                        snoozeEnabled: alarm.snoozeEnabled ?? true,
+                        snoozeIntervalMinutes: alarm.snoozeIntervalMinutes ?? 5,
+                        snoozeRepeatCount: alarm.snoozeRepeatCount ?? 3,
                         purpose: alarm.purpose,
                         mood: alarm.mood,
                         memo: alarm.memo,
