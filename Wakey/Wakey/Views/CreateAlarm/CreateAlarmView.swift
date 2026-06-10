@@ -3,7 +3,7 @@ import SwiftUI
 struct CreateAlarmView: View {
     let onBack: () -> Void
     let onGenerate: (AlarmDraft) -> Void
-    @AppStorage("wakey.profile.nickname") private var storedNickname = "지우"
+    @AppStorage("wakey.profile.nickname") private var storedNickname = WakeyProfile.defaultNickname
     @State private var draft = AlarmDraft()
     @State private var showValidation = false
 
@@ -15,7 +15,7 @@ struct CreateAlarmView: View {
                     timePicker
                     nicknameField
                     optionGrid(title: "알람 목적", items: AlarmPurpose.allCases, selected: $draft.purpose, color: WakeyColors.primary)
-                    optionGrid(title: "분위기", items: AlarmMood.allCases, selected: $draft.mood, color: WakeyColors.accent)
+                    optionGrid(title: "분위기", items: AlarmMood.allCases, selected: $draft.mood, color: WakeyColors.primary)
                     memoField
                     togglesCard
                     if showValidation && draft.nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -39,6 +39,7 @@ struct CreateAlarmView: View {
         }
         .wakeyScreenBackground()
         .onAppear {
+            draft.time = Date()
             draft.nickname = storedNickname
         }
     }
@@ -127,7 +128,7 @@ struct CreateAlarmView: View {
                 .wakeyCard(cornerRadius: 18)
                 .overlay(alignment: .topLeading) {
                     if draft.memo.isEmpty {
-                        Text("알람송에 포함하고 싶은 내용을 입력하세요")
+                        Text("가사에 포함하고 싶은 내용을 입력하세요.")
                             .font(.system(size: 16))
                             .foregroundStyle(WakeyColors.textSecondary.opacity(0.7))
                             .padding(.horizontal, 18)

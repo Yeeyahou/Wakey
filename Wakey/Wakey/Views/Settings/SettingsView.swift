@@ -7,7 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var notificationManager: NotificationManager
     @EnvironmentObject private var locationService: LocationService
     @EnvironmentObject private var calendarService: CalendarService
-    @AppStorage("wakey.profile.nickname") private var nickname = "지우"
+    @AppStorage("wakey.profile.nickname") private var nickname = WakeyProfile.defaultNickname
     @AppStorage("wakey.settings.useWeather") private var useWeather = true
     @AppStorage("wakey.settings.useCalendar") private var useCalendar = false
     @State private var isEditingNickname = false

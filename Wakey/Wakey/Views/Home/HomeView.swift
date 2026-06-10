@@ -12,7 +12,7 @@ struct HomeView: View {
                 header
                 nextAlarmCard
                 recentSongSection
-                GradientButton(title: "새 알람송 만들기", systemImage: "plus", action: onCreateAlarm)
+                GradientButton(title: "나만의 알람송 만들기", systemImage: "plus", action: onCreateAlarm)
                 statsGrid
             }
             .padding(.horizontal, 22)

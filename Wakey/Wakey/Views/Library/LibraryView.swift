@@ -152,7 +152,7 @@ private struct LibrarySongCard: View {
     private var songChips: some View {
         Group {
             WakeyChip(text: song.purpose.rawValue, color: WakeyColors.secondary)
-            WakeyChip(text: song.mood.rawValue, color: song.mood == .calm || song.mood == .encouraging ? WakeyColors.accent : WakeyColors.primary)
+            WakeyChip(text: song.mood.rawValue, color: WakeyColors.primary)
         }
     }
 }

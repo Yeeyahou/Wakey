@@ -162,7 +162,7 @@ private struct AlarmCard: View {
     private var alarmChips: some View {
         Group {
             WakeyChip(text: alarm.purpose.rawValue, color: WakeyColors.secondary)
-            WakeyChip(text: alarm.mood.rawValue, color: alarm.mood == .calm ? WakeyColors.accent : WakeyColors.primary)
+            WakeyChip(text: alarm.mood.rawValue, color: WakeyColors.primary)
         }
     }
 }
