@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="tab-001">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="scene-tab">
+            <objects>
+                <tabBarController id="tab-001" customClass="WakeyTabBarController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <tabBar key="tabBar" contentMode="scaleToFill" id="tab-bar">
+                        <rect key="frame" x="0.0" y="808" width="393" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </tabBar>
+                </tabBarController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-tab" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1150" y="-180"/>
+        </scene>
+        <scene sceneID="scene-home">
+            <objects>
+                <viewController storyboardIdentifier="HomeUIKitViewController" id="home-vc" customClass="HomeUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="home-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="home-scroll">
+                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <subviews>
+                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="home-stack">
+                                        <rect key="frame" x="22" y="22" width="349" height="478"/>
+                                        <subviews>
+                                            <label opaque="NO" text="좋은 아침이에요!" textAlignment="natural" lineBreakMode="tailTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="home-title">
+                                                <rect key="frame" x="0.0" y="0.0" width="349" height="37"/>
+                                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="31"/>
+                                            </label>
+                                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="home-card">
+                                                <rect key="frame" x="0.0" y="57" width="349" height="160"/>
+                                                <subviews>
+                                                    <label opaque="NO" text="다음 알람" translatesAutoresizingMaskIntoConstraints="NO" id="home-next-label">
+                                                        <rect key="frame" x="24" y="24" width="301" height="18"/>
+                                                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="15"/>
+                                                    </label>
+                                                    <label opaque="NO" text="07:00" translatesAutoresizingMaskIntoConstraints="NO" id="home-time">
+                                                        <rect key="frame" x="24" y="57" width="301" height="53"/>
+                                                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="44"/>
+                                                    </label>
+                                                </subviews>
+                                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="160" id="home-card-h"/>
+                                                    <constraint firstItem="home-next-label" firstAttribute="top" secondItem="home-card" secondAttribute="top" constant="24" id="home-next-t"/>
+                                                    <constraint firstItem="home-next-label" firstAttribute="leading" secondItem="home-card" secondAttribute="leading" constant="24" id="home-next-l"/>
+                                                    <constraint firstItem="home-next-label" firstAttribute="trailing" secondItem="home-card" secondAttribute="trailing" constant="-24" id="home-next-r"/>
+                                                    <constraint firstItem="home-time" firstAttribute="top" secondItem="home-next-label" secondAttribute="bottom" constant="15" id="home-time-t"/>
+                                                    <constraint firstItem="home-time" firstAttribute="leading" secondItem="home-card" secondAttribute="leading" constant="24" id="home-time-l"/>
+                                                    <constraint firstItem="home-time" firstAttribute="trailing" secondItem="home-card" secondAttribute="trailing" constant="-24" id="home-time-r"/>
+                                                </constraints>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                        <integer key="value" value="24"/>
+                                                    </userDefinedRuntimeAttribute>
+                                                </userDefinedRuntimeAttributes>
+                                            </view>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="home-create">
+                                                <rect key="frame" x="0.0" y="237" width="349" height="56"/>
+                                                <color key="backgroundColor" red="1" green="0.604" blue="0.498" alpha="1" colorSpace="calibratedRGB"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="56" id="home-create-h"/>
+                                                </constraints>
+                                                <state key="normal" title="+ 나만의 알람송 만들기">
+                                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                </state>
+                                            </button>
+                                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="home-recent">
+                                                <rect key="frame" x="0.0" y="313" width="349" height="165"/>
+                                                <subviews>
+                                                    <label opaque="NO" text="최근 생성된 알람송" translatesAutoresizingMaskIntoConstraints="NO" id="home-recent-title">
+                                                        <rect key="frame" x="24" y="24" width="301" height="28"/>
+                                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="23"/>
+                                                    </label>
+                                                    <label opaque="NO" text="07:00&#10;&quot;일어나요 지우야&quot;" numberOfLines="2" translatesAutoresizingMaskIntoConstraints="NO" id="home-recent-text">
+                                                        <rect key="frame" x="24" y="70" width="301" height="48"/>
+                                                        <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                                                    </label>
+                                                </subviews>
+                                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="165" id="home-recent-h"/>
+                                                    <constraint firstItem="home-recent-title" firstAttribute="top" secondItem="home-recent" secondAttribute="top" constant="24" id="home-recent-title-t"/>
+                                                    <constraint firstItem="home-recent-title" firstAttribute="leading" secondItem="home-recent" secondAttribute="leading" constant="24" id="home-recent-title-l"/>
+                                                    <constraint firstItem="home-recent-title" firstAttribute="trailing" secondItem="home-recent" secondAttribute="trailing" constant="-24" id="home-recent-title-r"/>
+                                                    <constraint firstItem="home-recent-text" firstAttribute="top" secondItem="home-recent-title" secondAttribute="bottom" constant="18" id="home-recent-text-t"/>
+                                                    <constraint firstItem="home-recent-text" firstAttribute="leading" secondItem="home-recent" secondAttribute="leading" constant="24" id="home-recent-text-l"/>
+                                                    <constraint firstItem="home-recent-text" firstAttribute="trailing" secondItem="home-recent" secondAttribute="trailing" constant="-24" id="home-recent-text-r"/>
+                                                </constraints>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                        <integer key="value" value="24"/>
+                                                    </userDefinedRuntimeAttribute>
+                                                </userDefinedRuntimeAttributes>
+                                            </view>
+                                        </subviews>
+                                    </stackView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="home-stack" firstAttribute="top" secondItem="home-scroll" secondAttribute="top" constant="22" id="home-stack-t"/>
+                                    <constraint firstItem="home-stack" firstAttribute="leading" secondItem="home-scroll" secondAttribute="leading" constant="22" id="home-stack-l"/>
+                                    <constraint firstItem="home-stack" firstAttribute="trailing" secondItem="home-scroll" secondAttribute="trailing" constant="-22" id="home-stack-r"/>
+                                    <constraint firstItem="home-stack" firstAttribute="bottom" secondItem="home-scroll" secondAttribute="bottom" constant="-22" id="home-stack-b"/>
+                                    <constraint firstItem="home-stack" firstAttribute="width" secondItem="home-scroll" secondAttribute="width" constant="-44" id="home-stack-w"/>
+                                </constraints>
+                            </scrollView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="home-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="home-scroll" firstAttribute="top" secondItem="home-safe" secondAttribute="top" id="home-scroll-t"/>
+                            <constraint firstItem="home-scroll" firstAttribute="leading" secondItem="home-view" secondAttribute="leading" id="home-scroll-l"/>
+                            <constraint firstItem="home-scroll" firstAttribute="trailing" secondItem="home-view" secondAttribute="trailing" id="home-scroll-r"/>
+                            <constraint firstItem="home-scroll" firstAttribute="bottom" secondItem="home-safe" secondAttribute="bottom" id="home-scroll-b"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-home" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-240" y="-180"/>
+        </scene>
+        <scene sceneID="scene-create">
+            <objects>
+                <viewController storyboardIdentifier="CreateAlarmUIKitViewController" id="create-vc" customClass="CreateAlarmUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="create-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <scrollView clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="create-scroll">
+                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                                <subviews>
+                                    <stackView axis="vertical" spacing="18" translatesAutoresizingMaskIntoConstraints="NO" id="create-stack">
+                                        <rect key="frame" x="22" y="22" width="349" height="560"/>
+                                        <subviews>
+                                            <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="time" preferredDatePickerStyle="wheels" translatesAutoresizingMaskIntoConstraints="NO" id="create-time">
+                                                <rect key="frame" x="0.0" y="0.0" width="349" height="216"/>
+                                            </datePicker>
+                                            <textField opaque="NO" contentMode="scaleToFill" borderStyle="roundedRect" placeholder="닉네임을 입력하세요" text="정원" translatesAutoresizingMaskIntoConstraints="NO" id="create-name">
+                                                <rect key="frame" x="0.0" y="234" width="349" height="40"/>
+                                            </textField>
+                                            <segmentedControl opaque="NO" contentMode="scaleToFill" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="create-purpose">
+                                                <rect key="frame" x="0.0" y="292" width="349" height="32"/>
+                                                <segments>
+                                                    <segment title="기상"/>
+                                                    <segment title="등교"/>
+                                                    <segment title="출근"/>
+                                                    <segment title="운동"/>
+                                                </segments>
+                                            </segmentedControl>
+                                            <segmentedControl opaque="NO" contentMode="scaleToFill" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="create-mood">
+                                                <rect key="frame" x="0.0" y="342" width="349" height="32"/>
+                                                <segments>
+                                                    <segment title="신나는"/>
+                                                    <segment title="잔잔한"/>
+                                                    <segment title="감성적인"/>
+                                                    <segment title="락"/>
+                                                </segments>
+                                            </segmentedControl>
+                                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" text="" translatesAutoresizingMaskIntoConstraints="NO" id="create-memo">
+                                                <rect key="frame" x="0.0" y="392" width="349" height="96"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                            </textView>
+                                            <button opaque="NO" contentMode="scaleToFill" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="create-button">
+                                                <rect key="frame" x="0.0" y="506" width="349" height="56"/>
+                                                <color key="backgroundColor" red="1" green="0.604" blue="0.498" alpha="1" colorSpace="calibratedRGB"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="56" id="create-button-h"/>
+                                                </constraints>
+                                                <state key="normal" title="알람송 생성하기">
+                                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                </state>
+                                            </button>
+                                        </subviews>
+                                    </stackView>
+                                </subviews>
+                            </scrollView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="create-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="create-scroll" firstAttribute="top" secondItem="create-safe" secondAttribute="top" id="create-scroll-t"/>
+                            <constraint firstItem="create-scroll" firstAttribute="leading" secondItem="create-view" secondAttribute="leading" id="create-scroll-l"/>
+                            <constraint firstItem="create-scroll" firstAttribute="trailing" secondItem="create-view" secondAttribute="trailing" id="create-scroll-r"/>
+                            <constraint firstItem="create-scroll" firstAttribute="bottom" secondItem="create-safe" secondAttribute="bottom" id="create-scroll-b"/>
+                            <constraint firstItem="create-stack" firstAttribute="top" secondItem="create-scroll" secondAttribute="top" constant="22" id="create-stack-t"/>
+                            <constraint firstItem="create-stack" firstAttribute="leading" secondItem="create-scroll" secondAttribute="leading" constant="22" id="create-stack-l"/>
+                            <constraint firstItem="create-stack" firstAttribute="trailing" secondItem="create-scroll" secondAttribute="trailing" constant="-22" id="create-stack-r"/>
+                            <constraint firstItem="create-stack" firstAttribute="bottom" secondItem="create-scroll" secondAttribute="bottom" constant="-22" id="create-stack-b"/>
+                            <constraint firstItem="create-stack" firstAttribute="width" secondItem="create-scroll" secondAttribute="width" constant="-44" id="create-stack-w"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-create" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="690" y="-180"/>
+        </scene>
+        <scene sceneID="scene-list">
+            <objects>
+                <viewController storyboardIdentifier="AlarmListUIKitViewController" id="list-vc" customClass="AlarmListUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="list-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" style="insetGrouped" translatesAutoresizingMaskIntoConstraints="NO" id="list-table">
+                                <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                            </tableView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="list-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="list-table" firstAttribute="top" secondItem="list-safe" secondAttribute="top" id="list-t"/>
+                            <constraint firstItem="list-table" firstAttribute="leading" secondItem="list-view" secondAttribute="leading" id="list-l"/>
+                            <constraint firstItem="list-table" firstAttribute="trailing" secondItem="list-view" secondAttribute="trailing" id="list-r"/>
+                            <constraint firstItem="list-table" firstAttribute="bottom" secondItem="list-safe" secondAttribute="bottom" id="list-b"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-list" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-240" y="610"/>
+        </scene>
+        <scene sceneID="scene-detail">
+            <objects>
+                <viewController storyboardIdentifier="AlarmDetailUIKitViewController" id="detail-vc" customClass="AlarmDetailUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="detail-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView axis="vertical" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" id="detail-stack">
+                                <rect key="frame" x="22" y="94" width="349" height="464"/>
+                                <subviews>
+                                    <label opaque="NO" text="07:00" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="detail-time">
+                                        <rect key="frame" x="0.0" y="0.0" width="349" height="64"/>
+                                        <fontDescription key="fontDescription" type="system" weight="medium" pointSize="54"/>
+                                    </label>
+                                    <label opaque="NO" text="가사 미리보기&#10;&#10;좋은 아침 지우야&#10;Wakey와 함께 오늘을 시작해요" numberOfLines="0" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="detail-lyrics">
+                                        <rect key="frame" x="0.0" y="80" width="349" height="220"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                                    </label>
+                                    <button opaque="NO" contentMode="scaleToFill" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="detail-play">
+                                        <rect key="frame" x="0.0" y="316" width="349" height="52"/>
+                                        <state key="normal" title="전체 노래 듣기"/>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="detail-done">
+                                        <rect key="frame" x="0.0" y="384" width="349" height="56"/>
+                                        <color key="backgroundColor" red="1" green="0.604" blue="0.498" alpha="1" colorSpace="calibratedRGB"/>
+                                        <state key="normal" title="완료">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        </state>
+                                    </button>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="detail-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="detail-stack" firstAttribute="top" secondItem="detail-safe" secondAttribute="top" constant="35" id="detail-t"/>
+                            <constraint firstItem="detail-stack" firstAttribute="leading" secondItem="detail-view" secondAttribute="leading" constant="22" id="detail-l"/>
+                            <constraint firstItem="detail-stack" firstAttribute="trailing" secondItem="detail-view" secondAttribute="trailing" constant="-22" id="detail-r"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-detail" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="690" y="610"/>
+        </scene>
+        <scene sceneID="scene-settings">
+            <objects>
+                <viewController storyboardIdentifier="SettingsUIKitViewController" id="settings-vc" customClass="SettingsUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="settings-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView axis="vertical" spacing="18" translatesAutoresizingMaskIntoConstraints="NO" id="settings-stack">
+                                <rect key="frame" x="22" y="94" width="349" height="272"/>
+                                <subviews>
+                                    <textField opaque="NO" borderStyle="roundedRect" text="정원" placeholder="닉네임" translatesAutoresizingMaskIntoConstraints="NO" id="settings-name">
+                                        <rect key="frame" x="0.0" y="0.0" width="349" height="40"/>
+                                    </textField>
+                                    <button opaque="NO" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="settings-noti">
+                                        <rect key="frame" x="0.0" y="58" width="349" height="52"/>
+                                        <state key="normal" title="알림 권한 요청"/>
+                                    </button>
+                                    <button opaque="NO" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="settings-location">
+                                        <rect key="frame" x="0.0" y="128" width="349" height="52"/>
+                                        <state key="normal" title="위치 권한 요청"/>
+                                    </button>
+                                    <button opaque="NO" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="settings-calendar">
+                                        <rect key="frame" x="0.0" y="198" width="349" height="52"/>
+                                        <state key="normal" title="캘린더 권한 요청"/>
+                                    </button>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="settings-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="settings-stack" firstAttribute="top" secondItem="settings-safe" secondAttribute="top" constant="35" id="settings-t"/>
+                            <constraint firstItem="settings-stack" firstAttribute="leading" secondItem="settings-view" secondAttribute="leading" constant="22" id="settings-l"/>
+                            <constraint firstItem="settings-stack" firstAttribute="trailing" secondItem="settings-view" secondAttribute="trailing" constant="-22" id="settings-r"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-settings" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1590" y="-180"/>
+        </scene>
+        <scene sceneID="scene-generating">
+            <objects>
+                <viewController storyboardIdentifier="GeneratingUIKitViewController" id="generating-vc" customClass="GeneratingUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="generating-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView axis="vertical" alignment="center" spacing="24" translatesAutoresizingMaskIntoConstraints="NO" id="generating-stack">
+                                <rect key="frame" x="32" y="280" width="329" height="214"/>
+                                <subviews>
+                                    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="generating-spinner">
+                                        <rect key="frame" x="146" y="0.0" width="37" height="37"/>
+                                    </activityIndicatorView>
+                                    <label opaque="NO" text="알람송을 생성하는 중입니다." textAlignment="center" numberOfLines="0" translatesAutoresizingMaskIntoConstraints="NO" id="generating-title">
+                                        <rect key="frame" x="0.0" y="61" width="329" height="31"/>
+                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="24"/>
+                                    </label>
+                                    <label opaque="NO" text="가사 생성, 음악 요청, 다운로드, 알림 예약 순서로 진행됩니다." textAlignment="center" numberOfLines="0" translatesAutoresizingMaskIntoConstraints="NO" id="generating-subtitle">
+                                        <rect key="frame" x="0.0" y="116" width="329" height="46"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                        <color key="textColor" red="0.545" green="0.545" blue="0.545" alpha="1" colorSpace="calibratedRGB"/>
+                                    </label>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="generating-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="generating-stack" firstAttribute="centerY" secondItem="generating-view" secondAttribute="centerY" constant="-60" id="generating-cy"/>
+                            <constraint firstItem="generating-stack" firstAttribute="leading" secondItem="generating-view" secondAttribute="leading" constant="32" id="generating-l"/>
+                            <constraint firstItem="generating-stack" firstAttribute="trailing" secondItem="generating-view" secondAttribute="trailing" constant="-32" id="generating-r"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-generating" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1590" y="610"/>
+        </scene>
+        <scene sceneID="scene-library">
+            <objects>
+                <viewController storyboardIdentifier="LibraryUIKitViewController" id="library-vc" customClass="LibraryUIKitViewController" customModule="Wakey" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="library-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" text="라이브러리" translatesAutoresizingMaskIntoConstraints="NO" id="library-title">
+                                <rect key="frame" x="32" y="94" width="329" height="38"/>
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="32"/>
+                            </label>
+                            <textField opaque="NO" borderStyle="roundedRect" placeholder="알람송 검색" translatesAutoresizingMaskIntoConstraints="NO" id="library-search">
+                                <rect key="frame" x="32" y="160" width="252" height="48"/>
+                            </textField>
+                            <button opaque="NO" buttonType="system" translatesAutoresizingMaskIntoConstraints="NO" id="library-filter">
+                                <rect key="frame" x="302" y="160" width="59" height="48"/>
+                                <state key="normal" title="필터"/>
+                            </button>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" style="insetGrouped" translatesAutoresizingMaskIntoConstraints="NO" id="library-table">
+                                <rect key="frame" x="0.0" y="236" width="393" height="582"/>
+                            </tableView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="library-safe"/>
+                        <color key="backgroundColor" red="1" green="0.984" blue="0.961" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="library-title" firstAttribute="top" secondItem="library-safe" secondAttribute="top" constant="35" id="library-title-t"/>
+                            <constraint firstItem="library-title" firstAttribute="leading" secondItem="library-view" secondAttribute="leading" constant="32" id="library-title-l"/>
+                            <constraint firstItem="library-title" firstAttribute="trailing" secondItem="library-view" secondAttribute="trailing" constant="-32" id="library-title-r"/>
+                            <constraint firstItem="library-search" firstAttribute="top" secondItem="library-title" secondAttribute="bottom" constant="28" id="library-search-t"/>
+                            <constraint firstItem="library-search" firstAttribute="leading" secondItem="library-view" secondAttribute="leading" constant="32" id="library-search-l"/>
+                            <constraint firstItem="library-filter" firstAttribute="leading" secondItem="library-search" secondAttribute="trailing" constant="18" id="library-filter-l"/>
+                            <constraint firstItem="library-filter" firstAttribute="trailing" secondItem="library-view" secondAttribute="trailing" constant="-32" id="library-filter-r"/>
+                            <constraint firstItem="library-filter" firstAttribute="centerY" secondItem="library-search" secondAttribute="centerY" id="library-filter-cy"/>
+                            <constraint firstItem="library-table" firstAttribute="top" secondItem="library-search" secondAttribute="bottom" constant="28" id="library-table-t"/>
+                            <constraint firstItem="library-table" firstAttribute="leading" secondItem="library-view" secondAttribute="leading" id="library-table-l"/>
+                            <constraint firstItem="library-table" firstAttribute="trailing" secondItem="library-view" secondAttribute="trailing" id="library-table-r"/>
+                            <constraint firstItem="library-table" firstAttribute="bottom" secondItem="library-safe" secondAttribute="bottom" id="library-table-b"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="fr-library" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2490" y="-180"/>
+        </scene>
+    </scenes>
+</document>
