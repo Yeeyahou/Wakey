@@ -2,6 +2,36 @@ import Foundation
 import AVFoundation
 
 struct AudioFileService {
+    static let supportedAlarmSoundExtensions = ["wav", "caf", "aiff", "aif"]
+
+    static func bundledAlarmSoundURLs() -> [URL] {
+        let nestedURLs = supportedAlarmSoundExtensions.flatMap { fileExtension in
+            Bundle.main.urls(forResourcesWithExtension: fileExtension, subdirectory: "AlarmSounds") ?? []
+        }
+        let rootURLs = supportedAlarmSoundExtensions.flatMap { fileExtension in
+            Bundle.main.urls(forResourcesWithExtension: fileExtension, subdirectory: nil) ?? []
+        }
+        let urls = nestedURLs.isEmpty ? rootURLs : nestedURLs
+        return urls.sorted { $0.deletingPathExtension().lastPathComponent.localizedStandardCompare($1.deletingPathExtension().lastPathComponent) == .orderedAscending }
+    }
+
+    func copyBundledAlarmSoundToLibrary(fileName: String) async throws -> URL {
+        try await Task.detached(priority: .userInitiated) {
+            let resourceName = (fileName as NSString).deletingPathExtension
+            let resourceExtension = (fileName as NSString).pathExtension
+            guard let source = Bundle.main.url(forResource: resourceName, withExtension: resourceExtension, subdirectory: "AlarmSounds")
+                ?? Bundle.main.url(forResource: resourceName, withExtension: resourceExtension) else {
+                throw AudioError.soundNotFound
+            }
+            let destination = try Self.librarySoundsDirectory().appendingPathComponent(fileName)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: source, to: destination)
+            return destination
+        }.value
+    }
+
     func createShortNotificationAudio(from sourceURL: URL, alarmId: UUID) async throws -> URL {
         try await Task.detached(priority: .userInitiated) {
             let soundsDirectory = try Self.librarySoundsDirectory()
@@ -53,10 +83,16 @@ struct AudioFileService {
     }
 
     enum AudioError: LocalizedError {
+        case soundNotFound
         case conversionFailed
 
         var errorDescription: String? {
-            "알림용 오디오 파일을 만들지 못했습니다."
+            switch self {
+            case .soundNotFound:
+                "알림 사운드 파일을 찾지 못했습니다."
+            case .conversionFailed:
+                "알림용 오디오 파일을 만들지 못했습니다."
+            }
         }
     }
 }
