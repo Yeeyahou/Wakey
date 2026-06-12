@@ -121,7 +121,7 @@ extension LinearGradient {
     )
 
     static let wakeySoft = LinearGradient(
-        colors: [WakeyGradientColors.primary.color.opacity(0.10), WakeyGradientColors.accent.color.opacity(0.10)],
+        colors: [Color(hex: "FCF1DD"), WakeyGradientColors.accent.color.opacity(0.10)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )

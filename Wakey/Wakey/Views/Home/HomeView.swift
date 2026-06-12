@@ -12,7 +12,7 @@ struct HomeView: View {
                 header
                 nextAlarmCard
                 recentSongSection
-                GradientButton(title: "나만의 알람송 만들기", systemImage: "plus", action: onCreateAlarm)
+                GradientButton(title: "나만의 알람 만들기", systemImage: nil, action: onCreateAlarm)
                 statsGrid
             }
             .padding(.horizontal, 22)
@@ -108,7 +108,7 @@ struct HomeView: View {
 
     private var statsGrid: some View {
         HStack(spacing: 16) {
-            StatCard(value: "\(alarmManager.alarms.filter { $0.lyrics != nil }.count)", label: "생성된 알람송")
+            StatCard(value: "\(alarmManager.generatedSongs.count)", label: "생성된 알람송")
             StatCard(value: "\(alarmManager.enabledAlarms.count)", label: "활성 알람")
             StatCard(value: "85%", label: "정시 기상률")
         }

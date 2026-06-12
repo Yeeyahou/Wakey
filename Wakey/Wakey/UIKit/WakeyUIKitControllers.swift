@@ -1,4 +1,5 @@
 import UIKit
+import Combine
 import UserNotifications
 import CoreLocation
 import EventKit
@@ -133,12 +134,14 @@ final class WakeyGradientView: UIView {
     init(
         colors: [UIColor],
         startPoint: CGPoint = CGPoint(x: 0, y: 0),
-        endPoint: CGPoint = CGPoint(x: 1, y: 1)
+        endPoint: CGPoint = CGPoint(x: 1, y: 1),
+        locations: [NSNumber]? = nil
     ) {
         super.init(frame: .zero)
         gradientLayer.colors = colors.map(\.cgColor)
         gradientLayer.startPoint = startPoint
         gradientLayer.endPoint = endPoint
+        gradientLayer.locations = locations
         layer.insertSublayer(gradientLayer, at: 0)
     }
 
@@ -157,6 +160,61 @@ final class WakeyGradientView: UIView {
     }
 }
 
+final class WakeyGradientBorderView: UIView {
+    private let fillGradientLayer = CAGradientLayer()
+    private let gradientLayer = CAGradientLayer()
+    private let shapeLayer = CAShapeLayer()
+    private let borderWidthValue: CGFloat
+    private let cornerRadiusValue: CGFloat
+
+    init(
+        colors: [UIColor],
+        borderWidth: CGFloat = 1.5,
+        cornerRadius: CGFloat = 24,
+        fillColors: [UIColor]? = nil,
+        fillAlpha: CGFloat = 0
+    ) {
+        self.borderWidthValue = borderWidth
+        self.cornerRadiusValue = cornerRadius
+        super.init(frame: .zero)
+        backgroundColor = WakeyUIKitStyle.card
+        layer.cornerRadius = cornerRadius
+        clipsToBounds = true
+
+        fillGradientLayer.colors = (fillColors ?? colors).map { $0.withAlphaComponent(fillAlpha).cgColor }
+        fillGradientLayer.startPoint = CGPoint(x: 0, y: 0.1)
+        fillGradientLayer.endPoint = CGPoint(x: 1, y: 0.9)
+        layer.addSublayer(fillGradientLayer)
+
+        gradientLayer.colors = colors.map(\.cgColor)
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        shapeLayer.fillColor = UIColor.clear.cgColor
+        shapeLayer.strokeColor = UIColor.black.cgColor
+        shapeLayer.lineWidth = borderWidth
+        gradientLayer.mask = shapeLayer
+        layer.addSublayer(gradientLayer)
+    }
+
+    required init?(coder: NSCoder) {
+        self.borderWidthValue = 1.5
+        self.cornerRadiusValue = 24
+        super.init(coder: coder)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fillGradientLayer.frame = bounds
+        fillGradientLayer.cornerRadius = layer.cornerRadius
+        gradientLayer.frame = bounds
+        let inset = borderWidthValue / 2
+        shapeLayer.path = UIBezierPath(
+            roundedRect: bounds.insetBy(dx: inset, dy: inset),
+            cornerRadius: max(0, cornerRadiusValue - inset)
+        ).cgPath
+    }
+}
+
 final class WakeyBottomFadeView: UIView {
     private let gradientLayer = CAGradientLayer()
 
@@ -165,10 +223,10 @@ final class WakeyBottomFadeView: UIView {
         isUserInteractionEnabled = false
         gradientLayer.colors = [
             WakeyUIKitStyle.background.withAlphaComponent(0).cgColor,
-            WakeyUIKitStyle.background.withAlphaComponent(0.98).cgColor,
-            WakeyUIKitStyle.background.cgColor
+            WakeyUIKitStyle.background.withAlphaComponent(0.68).cgColor,
+            WakeyUIKitStyle.background.withAlphaComponent(0.9).cgColor
         ]
-        gradientLayer.locations = [0, 0.38, 1]
+        gradientLayer.locations = [0, 0.52, 1]
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
@@ -191,11 +249,11 @@ final class WakeyTopFadeView: UIView {
         super.init(frame: frame)
         isUserInteractionEnabled = false
         gradientLayer.colors = [
-            WakeyUIKitStyle.background.cgColor,
-            WakeyUIKitStyle.background.withAlphaComponent(0.94).cgColor,
+            WakeyUIKitStyle.background.withAlphaComponent(0.9).cgColor,
+            WakeyUIKitStyle.background.withAlphaComponent(0.62).cgColor,
             WakeyUIKitStyle.background.withAlphaComponent(0).cgColor
         ]
-        gradientLayer.locations = [0, 0.46, 1]
+        gradientLayer.locations = [0, 0.44, 1]
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
@@ -282,7 +340,7 @@ class WakeyBaseViewController: UIViewController {
             stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 22),
             stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 22),
             stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -22),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -110),
+            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -22),
             stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -44)
         ])
 
@@ -367,8 +425,8 @@ class WakeyBaseViewController: UIViewController {
         card.addSubview(row)
         NSLayoutConstraint.activate([
             card.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
-            card.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 38),
-            card.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -38),
+            card.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 22),
+            card.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -22),
             card.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6),
             row.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
             row.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 18),
@@ -379,8 +437,11 @@ class WakeyBaseViewController: UIViewController {
 }
 
 final class WakeyTabBarController: UITabBarController {
+    static weak var activeInstance: WakeyTabBarController?
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        Self.activeInstance = self
 
         let home = UINavigationController(rootViewController: HomeUIKitViewController())
         home.tabBarItem = UITabBarItem(title: "홈", image: UIImage(systemName: "house.fill"), tag: 0)
@@ -401,6 +462,291 @@ final class WakeyTabBarController: UITabBarController {
         tabBar.layer.cornerRadius = 26
         tabBar.layer.masksToBounds = true
     }
+
+    func showRingingAlarm(_ alarm: AlarmSong) {
+        dismiss(animated: false)
+        selectedIndex = 1
+        let controller = RingingAlarmUIKitViewController(alarm: alarm)
+        controller.modalPresentationStyle = .fullScreen
+        present(controller, animated: true)
+    }
+}
+
+@MainActor
+enum WakeyNotificationRouter {
+    static func openAlarm(from userInfo: [AnyHashable: Any]) {
+        guard let alarmIdString = userInfo["alarmId"] as? String,
+              let alarmId = UUID(uuidString: alarmIdString),
+              let alarm = WakeyAppContext.shared.alarmManager.alarms.first(where: { $0.id == alarmId }) else {
+            return
+        }
+
+        if let tabBar = WakeyTabBarController.activeInstance {
+            tabBar.showRingingAlarm(alarm)
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            WakeyTabBarController.activeInstance?.showRingingAlarm(alarm)
+        }
+    }
+}
+
+final class RingingAlarmUIKitViewController: UIViewController {
+    private let alarm: AlarmSong
+    private let player = AudioPlayerService()
+    private let gradientLayer = CAGradientLayer()
+    private let glowLayer = CAGradientLayer()
+    private let slideTrack = UIView()
+    private let slideThumb = UIView()
+    private let slideLabel = UILabel()
+    private var thumbLeadingConstraint: NSLayoutConstraint?
+    private var didStop = false
+
+    init(alarm: AlarmSong) {
+        self.alarm = alarm
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .fullScreen
+    }
+
+    required init?(coder: NSCoder) {
+        alarm = AlarmSong(time: Date(), purpose: .wakeup, mood: .exciting, nickname: WakeyProfile.nickname, memo: "")
+        super.init(coder: coder)
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupBackground()
+        setupContent()
+        player.volume = alarm.resolvedAlarmVolume
+        player.play(url: alarm.originalAudioURL ?? alarm.notificationAudioURL)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        gradientLayer.frame = view.bounds
+        glowLayer.frame = view.bounds
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        player.pause()
+    }
+
+    private func setupBackground() {
+        view.backgroundColor = .black
+        gradientLayer.colors = [
+            UIColor.black.cgColor,
+            UIColor(red: 0.10, green: 0.04, blue: 0.02, alpha: 1).cgColor,
+            UIColor.black.cgColor
+        ]
+        gradientLayer.locations = [0, 0.55, 1]
+        gradientLayer.startPoint = CGPoint(x: 0.2, y: 0.1)
+        gradientLayer.endPoint = CGPoint(x: 0.9, y: 0.9)
+        view.layer.addSublayer(gradientLayer)
+
+        glowLayer.colors = [
+            WakeyUIKitStyle.primary.withAlphaComponent(0.0).cgColor,
+            WakeyUIKitStyle.primary.withAlphaComponent(0.55).cgColor,
+            UIColor(red: 1, green: 0.28, blue: 0.16, alpha: 0.28).cgColor,
+            WakeyUIKitStyle.primary.withAlphaComponent(0.0).cgColor
+        ]
+        glowLayer.locations = [0, 0.36, 0.68, 1]
+        glowLayer.startPoint = CGPoint(x: 0.08, y: 0.2)
+        glowLayer.endPoint = CGPoint(x: 0.92, y: 0.86)
+        view.layer.addSublayer(glowLayer)
+
+        let animation = CABasicAnimation(keyPath: "startPoint")
+        animation.fromValue = CGPoint(x: 0.05, y: 0.2)
+        animation.toValue = CGPoint(x: 0.45, y: 0.05)
+        animation.duration = 3.4
+        animation.autoreverses = true
+        animation.repeatCount = .infinity
+        glowLayer.add(animation, forKey: "meshStart")
+
+        let endAnimation = CABasicAnimation(keyPath: "endPoint")
+        endAnimation.fromValue = CGPoint(x: 0.95, y: 0.85)
+        endAnimation.toValue = CGPoint(x: 0.58, y: 0.98)
+        endAnimation.duration = 4.2
+        endAnimation.autoreverses = true
+        endAnimation.repeatCount = .infinity
+        glowLayer.add(endAnimation, forKey: "meshEnd")
+    }
+
+    private func setupContent() {
+        let content = UIStackView()
+        content.axis = .vertical
+        content.alignment = .center
+        content.spacing = 28
+        content.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(content)
+
+        let header = UIStackView()
+        header.axis = .vertical
+        header.alignment = .center
+        header.spacing = 12
+
+        let titleLabel = UILabel()
+        titleLabel.text = alarm.alarmName ?? "Alarm"
+        titleLabel.font = .systemFont(ofSize: 22, weight: .semibold)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 2
+
+        let timeLabel = UILabel()
+        timeLabel.text = alarm.time.alarmTimeText
+        timeLabel.font = .systemFont(ofSize: 88, weight: .semibold)
+        timeLabel.textColor = .white
+        timeLabel.textAlignment = .center
+
+        header.addArrangedSubview(titleLabel)
+        header.addArrangedSubview(timeLabel)
+        content.addArrangedSubview(header)
+
+        let lyricsBox = UIScrollView()
+        lyricsBox.translatesAutoresizingMaskIntoConstraints = false
+        lyricsBox.layer.cornerRadius = 24
+        lyricsBox.backgroundColor = UIColor.black.withAlphaComponent(0.20)
+        lyricsBox.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+        lyricsBox.heightAnchor.constraint(equalToConstant: 220).isActive = true
+
+        let lyricsLabel = UILabel()
+        lyricsLabel.translatesAutoresizingMaskIntoConstraints = false
+        lyricsLabel.text = alarm.isAIAlarmSong ? (alarm.lyrics ?? "") : ""
+        lyricsLabel.font = .systemFont(ofSize: 21, weight: .semibold)
+        lyricsLabel.textColor = UIColor.white.withAlphaComponent(0.88)
+        lyricsLabel.textAlignment = .center
+        lyricsLabel.numberOfLines = 0
+        lyricsBox.addSubview(lyricsLabel)
+        NSLayoutConstraint.activate([
+            lyricsLabel.topAnchor.constraint(equalTo: lyricsBox.contentLayoutGuide.topAnchor, constant: 24),
+            lyricsLabel.leadingAnchor.constraint(equalTo: lyricsBox.contentLayoutGuide.leadingAnchor, constant: 22),
+            lyricsLabel.trailingAnchor.constraint(equalTo: lyricsBox.contentLayoutGuide.trailingAnchor, constant: -22),
+            lyricsLabel.bottomAnchor.constraint(equalTo: lyricsBox.contentLayoutGuide.bottomAnchor, constant: -24),
+            lyricsLabel.widthAnchor.constraint(equalTo: lyricsBox.frameLayoutGuide.widthAnchor, constant: -44)
+        ])
+        content.addArrangedSubview(lyricsBox)
+
+        let spacer = UIView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        content.addArrangedSubview(spacer)
+
+        let snoozeButton = UIButton(type: .system)
+        snoozeButton.setTitle("다시 알림", for: .normal)
+        snoozeButton.setTitleColor(.white, for: .normal)
+        snoozeButton.titleLabel?.font = .systemFont(ofSize: 20, weight: .semibold)
+        snoozeButton.backgroundColor = WakeyUIKitStyle.primary
+        snoozeButton.layer.cornerRadius = 34
+        snoozeButton.heightAnchor.constraint(equalToConstant: 68).isActive = true
+        snoozeButton.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+        snoozeButton.addTarget(self, action: #selector(snoozeTapped), for: .touchUpInside)
+        content.addArrangedSubview(snoozeButton)
+
+        content.addArrangedSubview(slideToStopControl())
+
+        NSLayoutConstraint.activate([
+            content.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 54),
+            content.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 36),
+            content.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -36),
+            content.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -34)
+        ])
+    }
+
+    private func slideToStopControl() -> UIView {
+        slideTrack.translatesAutoresizingMaskIntoConstraints = false
+        slideTrack.backgroundColor = UIColor.white.withAlphaComponent(0.10)
+        slideTrack.layer.cornerRadius = 34
+        slideTrack.clipsToBounds = true
+        slideTrack.heightAnchor.constraint(equalToConstant: 68).isActive = true
+
+        slideLabel.text = "밀어서 끄기"
+        slideLabel.textColor = UIColor.white.withAlphaComponent(0.35)
+        slideLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        slideLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        slideThumb.backgroundColor = UIColor.white.withAlphaComponent(0.16)
+        slideThumb.layer.cornerRadius = 30
+        slideThumb.translatesAutoresizingMaskIntoConstraints = false
+        let stopIcon = UIImageView(image: UIImage(systemName: "stop.fill"))
+        stopIcon.tintColor = .white
+        stopIcon.translatesAutoresizingMaskIntoConstraints = false
+        slideThumb.addSubview(stopIcon)
+
+        slideTrack.addSubview(slideLabel)
+        slideTrack.addSubview(slideThumb)
+        thumbLeadingConstraint = slideThumb.leadingAnchor.constraint(equalTo: slideTrack.leadingAnchor, constant: 4)
+        thumbLeadingConstraint?.isActive = true
+
+        NSLayoutConstraint.activate([
+            slideTrack.widthAnchor.constraint(equalToConstant: max(260, UIScreen.main.bounds.width - 72)),
+            slideLabel.centerXAnchor.constraint(equalTo: slideTrack.centerXAnchor, constant: 22),
+            slideLabel.centerYAnchor.constraint(equalTo: slideTrack.centerYAnchor),
+            slideThumb.topAnchor.constraint(equalTo: slideTrack.topAnchor, constant: 4),
+            slideThumb.bottomAnchor.constraint(equalTo: slideTrack.bottomAnchor, constant: -4),
+            slideThumb.widthAnchor.constraint(equalToConstant: 60),
+            stopIcon.centerXAnchor.constraint(equalTo: slideThumb.centerXAnchor),
+            stopIcon.centerYAnchor.constraint(equalTo: slideThumb.centerYAnchor),
+            stopIcon.widthAnchor.constraint(equalToConstant: 24),
+            stopIcon.heightAnchor.constraint(equalToConstant: 24)
+        ])
+
+        slideTrack.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleStopPan(_:))))
+        return slideTrack
+    }
+
+    @objc private func snoozeTapped() {
+        player.pause()
+        scheduleSnoozeNotification()
+        dismiss(animated: true)
+    }
+
+    private func scheduleSnoozeNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = alarm.alarmName ?? "Wakey"
+        content.body = "다시 알림 시간이 됐어요."
+        content.userInfo = ["alarmId": alarm.id.uuidString]
+        if let fileName = alarm.notificationSoundFileName {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(fileName))
+        } else {
+            content.sound = .default
+        }
+
+        let minutes = max(alarm.snoozeIntervalMinutes ?? 5, 1)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(minutes * 60), repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "\(alarm.id.uuidString)-snooze-\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    @objc private func handleStopPan(_ sender: UIPanGestureRecognizer) {
+        let maxOffset = max(0, slideTrack.bounds.width - 64)
+        let translation = sender.translation(in: slideTrack).x
+        let offset = min(max(4, translation + 4), maxOffset)
+        thumbLeadingConstraint?.constant = offset
+        slideLabel.alpha = max(0.12, 1 - offset / maxOffset)
+
+        if sender.state == .ended || sender.state == .cancelled {
+            if offset > maxOffset * 0.78 {
+                stopAlarm()
+            } else {
+                UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) {
+                    self.thumbLeadingConstraint?.constant = 4
+                    self.slideLabel.alpha = 1
+                    self.view.layoutIfNeeded()
+                }
+            }
+        }
+    }
+
+    private func stopAlarm() {
+        guard !didStop else { return }
+        didStop = true
+        player.pause()
+        dismiss(animated: true)
+    }
 }
 
 final class HomeUIKitViewController: WakeyBaseViewController {
@@ -414,51 +760,245 @@ final class HomeUIKitViewController: WakeyBaseViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
         render()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     private func render() {
         stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        stackView.addArrangedSubview(label("좋은 아침이에요!", size: 31, weight: .semibold))
-        stackView.addArrangedSubview(weatherSummaryRow())
+        let headerStack = UIStackView()
+        headerStack.axis = .vertical
+        headerStack.spacing = 8
+        headerStack.addArrangedSubview(label("좋은 아침이에요!", size: 31, weight: .semibold))
+        headerStack.addArrangedSubview(weatherSummaryRow())
+        stackView.addArrangedSubview(headerStack)
 
-        let next = context.alarmManager.nextAlarm
+        let nextInfo = nextAlarmInfo()
         let nextStack = UIStackView()
         nextStack.axis = .vertical
-        nextStack.spacing = 12
+        nextStack.spacing = 10
         nextStack.addArrangedSubview(label("다음 알람", size: 15, weight: .medium, color: WakeyUIKitStyle.subtext))
-        nextStack.addArrangedSubview(label(next?.time.alarmTimeText ?? "예정된 알람이 없어요", size: next == nil ? 24 : 44, weight: .medium))
-        if let next {
-            nextStack.addArrangedSubview(chipRow([
-                WakeyChipLabel(text: next.purpose.rawValue, color: WakeyUIKitStyle.primary),
-                label("\(next.mood.rawValue) 분위기", size: 16, weight: .medium, color: WakeyUIKitStyle.subtext)
-            ]))
+        if let nextInfo {
+            nextStack.addArrangedSubview(timeWithPeriodLabel(for: nextInfo.alarm.time))
+            nextStack.addArrangedSubview(label(countdownText(until: nextInfo.fireDate), size: 14, weight: .medium, color: WakeyUIKitStyle.subtext))
+            let alarmName = nextInfo.alarm.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            var bottomItems: [UIView] = [homePurposeChip(for: nextInfo.alarm)]
+            if let alarmName, !alarmName.isEmpty {
+                bottomItems.append(label(alarmName, size: 16, weight: .medium, color: WakeyUIKitStyle.subtext))
+            } else {
+                bottomItems.append(label(" ", size: 16, weight: .medium, color: WakeyUIKitStyle.subtext))
+            }
+            let bottomRow = chipRow(bottomItems)
+            bottomRow.alignment = .center
+            nextStack.addArrangedSubview(bottomRow)
+        } else {
+            let topSpacer = UIView()
+            let bottomSpacer = UIView()
+            nextStack.addArrangedSubview(topSpacer)
+            nextStack.addArrangedSubview(label("예정된 알람이 없어요", size: 24, weight: .semibold))
+            nextStack.addArrangedSubview(bottomSpacer)
+            topSpacer.heightAnchor.constraint(equalTo: bottomSpacer.heightAnchor).isActive = true
         }
-        stackView.addArrangedSubview(softGradientCard(nextStack, padding: 28))
+        let nextCard = softGradientCard(nextStack, padding: 26)
+        nextCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 206).isActive = true
+        stackView.addArrangedSubview(nextCard)
 
         let recentStack = UIStackView()
         recentStack.axis = .vertical
         recentStack.spacing = 14
-        recentStack.addArrangedSubview(label("최근 생성된 알람송", size: 23, weight: .semibold))
+        recentStack.addArrangedSubview(label("최근 생성된 알람송", size: 21, weight: .semibold))
         let recent = context.alarmManager.recentGenerated
         if let recent {
-            let info = UIStackView()
+            let songTitle = recent.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let titleLabel = label(songTitle?.isEmpty == false ? songTitle! : "Wakey Alarm Song", size: 23, weight: .semibold, lines: 1)
+            titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+            let playButton = UIButton(type: .system)
+            playButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+            playButton.tintColor = WakeyUIKitStyle.primary
+            playButton.backgroundColor = .clear
+            playButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 22, weight: .bold), forImageIn: .normal)
+            playButton.widthAnchor.constraint(equalToConstant: 34).isActive = true
+            playButton.heightAnchor.constraint(equalToConstant: 34).isActive = true
+            playButton.addTarget(self, action: #selector(openRecentGeneratedSong), for: .touchUpInside)
+
+            let row = UIStackView(arrangedSubviews: [titleLabel, UIView(), playButton])
+            row.axis = .horizontal
+            row.spacing = 14
+            row.alignment = .center
+
+            let info = UIStackView(arrangedSubviews: [
+                row,
+                label("\"\((recent.lyrics ?? "").split(separator: "\n").first ?? "알람송이 준비됐어요")\"", size: 16, color: WakeyUIKitStyle.subtext, lines: 2)
+            ])
             info.axis = .vertical
             info.spacing = 10
-            info.addArrangedSubview(chipRow([
-                label(recent.time.alarmTimeText, size: 25, weight: .medium),
-                WakeyChipLabel(text: recent.purpose.rawValue, color: WakeyUIKitStyle.secondary)
-            ]))
-            info.addArrangedSubview(label("\"\((recent.lyrics ?? "").split(separator: "\n").first ?? "알람송이 준비됐어요")\"", size: 16, color: WakeyUIKitStyle.subtext, lines: 2))
-            recentStack.addArrangedSubview(info)
+            let button = UIButton(type: .system)
+            button.backgroundColor = .clear
+            button.addTarget(self, action: #selector(openRecentGeneratedSong), for: .touchUpInside)
+            let container = card(info, padding: 24)
+            container.addSubview(button)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                button.topAnchor.constraint(equalTo: container.topAnchor),
+                button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                button.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                button.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            ])
+            container.bringSubviewToFront(button)
+            recentStack.addArrangedSubview(container)
         } else {
             recentStack.addArrangedSubview(label("아직 생성된 알람송이 없어요", size: 18, color: WakeyUIKitStyle.subtext, lines: 2))
         }
-        stackView.addArrangedSubview(card(recentStack, padding: 24))
+        stackView.addArrangedSubview(recentStack)
 
-        let createButton = WakeyUIKitStyle.gradientButton(title: "나만의 알람송 만들기", image: UIImage(systemName: "plus"))
+        stackView.addArrangedSubview(homeStatsRow())
+
+        let createButton = WakeyUIKitStyle.gradientButton(title: "나만의 알람 만들기")
         createButton.addTarget(self, action: #selector(openCreate), for: .touchUpInside)
         stackView.addArrangedSubview(createButton)
+    }
+
+    private func homeStatsRow() -> UIStackView {
+        let row = UIStackView(arrangedSubviews: [
+            statCard(value: "\(context.alarmManager.generatedSongs.count)", title: "저장된 알람송"),
+            statCard(value: "\(context.alarmManager.enabledAlarms.count)", title: "활성 알람")
+        ])
+        row.axis = .horizontal
+        row.spacing = 18
+        row.distribution = .fillEqually
+        return row
+    }
+
+    private func statCard(value: String, title: String) -> UIView {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.addArrangedSubview(label(value, size: 28, weight: .medium))
+        stack.addArrangedSubview(label(title, size: 14, weight: .medium, color: WakeyUIKitStyle.subtext))
+
+        let container = card(stack, padding: 18)
+        container.heightAnchor.constraint(equalToConstant: 112).isActive = true
+        return container
+    }
+
+    private func timeWithPeriodLabel(for date: Date) -> UILabel {
+        let periodFormatter = DateFormatter()
+        periodFormatter.locale = Locale(identifier: "en_US_POSIX")
+        periodFormatter.dateFormat = "a"
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "ko_KR")
+        timeFormatter.dateFormat = "h:mm"
+
+        let text = NSMutableAttributedString(
+            string: "\(periodFormatter.string(from: date)) ",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 20, weight: .bold),
+                .foregroundColor: WakeyUIKitStyle.text
+            ]
+        )
+        text.append(NSAttributedString(
+            string: timeFormatter.string(from: date),
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 52, weight: .medium),
+                .foregroundColor: WakeyUIKitStyle.text
+            ]
+        ))
+
+        let label = UILabel()
+        label.attributedText = text
+        label.numberOfLines = 1
+        return label
+    }
+
+    private func homePurposeChip(for alarm: AlarmSong) -> UILabel {
+        let text = isAIAlarm(alarm) ? alarm.purpose.rawValue : "기본"
+        let chip = UILabel()
+        chip.text = text
+        chip.font = .systemFont(ofSize: 14, weight: .medium)
+        chip.textColor = WakeyUIKitStyle.text
+        chip.textAlignment = .center
+        chip.backgroundColor = WakeyUIKitStyle.primary.withAlphaComponent(0.34)
+        chip.layer.cornerRadius = 17
+        chip.clipsToBounds = true
+        chip.heightAnchor.constraint(equalToConstant: 34).isActive = true
+        chip.widthAnchor.constraint(equalToConstant: 70).isActive = true
+        return chip
+    }
+
+    private func isAIAlarm(_ alarm: AlarmSong) -> Bool {
+        alarm.isAIAlarmSong
+    }
+
+    @objc private func openRecentGeneratedSong() {
+        guard let recent = context.alarmManager.recentGenerated else { return }
+        let controller = AlarmDetailUIKitViewController(alarm: recent)
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    private func nextAlarmInfo() -> (alarm: AlarmSong, fireDate: Date)? {
+        context.alarmManager.enabledAlarms
+            .compactMap { alarm -> (AlarmSong, Date)? in
+                guard let fireDate = nextFireDate(for: alarm) else { return nil }
+                return (alarm, fireDate)
+            }
+            .min { $0.1 < $1.1 }
+    }
+
+    private func nextFireDate(for alarm: AlarmSong) -> Date? {
+        let calendar = Calendar.current
+        let time = calendar.dateComponents([.hour, .minute], from: alarm.time)
+        let now = Date()
+
+        if alarm.repeatDays.isEmpty {
+            let base = calendar.startOfDay(for: alarm.date)
+            let date = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: base) ?? alarm.date
+            return date > now ? date : calendar.date(byAdding: .day, value: 1, to: date)
+        }
+
+        return (0..<14).compactMap { offset -> Date? in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { return nil }
+            guard alarm.repeatDays.contains(weekday(for: day)) else { return nil }
+            let candidate = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: day)
+            guard let candidate, candidate > now else { return nil }
+            return candidate
+        }.min()
+    }
+
+    private func weekday(for date: Date) -> Weekday {
+        switch Calendar.current.component(.weekday, from: date) {
+        case 1: return .sunday
+        case 2: return .monday
+        case 3: return .tuesday
+        case 4: return .wednesday
+        case 5: return .thursday
+        case 6: return .friday
+        default: return .saturday
+        }
+    }
+
+    private func countdownText(until date: Date) -> String {
+        let seconds = max(60, Int(date.timeIntervalSince(Date())))
+        let days = seconds / 86_400
+        let hours = (seconds % 86_400) / 3_600
+        let minutes = (seconds % 3_600) / 60
+        var parts: [String] = []
+        if days > 0 {
+            parts.append("\(days)일")
+        }
+        if hours > 0 {
+            parts.append("\(hours)시간")
+        }
+        parts.append("\(minutes)분")
+        return "\(parts.joined(separator: " ")) 뒤에 알람이 울립니다"
     }
 
     private func weatherSummaryRow() -> UIStackView {
@@ -477,12 +1017,19 @@ final class HomeUIKitViewController: WakeyBaseViewController {
     }
 
     @objc private func openCreate() {
-        navigationController?.pushViewController(CreateAlarmUIKitViewController(), animated: true)
+        let controller = CreateAlarmUIKitViewController()
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
     }
 }
 
-class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate {
+class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
     private let tableView = UITableView(frame: .zero, style: .plain)
+    private let weekdayDisplayOrder: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+    private let deleteRevealWidth: CGFloat = 80
+    private let alarmCardTag = 2701
+    private let deleteButtonTag = 2702
+    private var ignoresNextTapClose = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -492,11 +1039,15 @@ class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSour
         tableView.backgroundColor = WakeyUIKitStyle.background
         tableView.separatorStyle = .none
         tableView.rowHeight = 132
-        tableView.sectionHeaderHeight = 18
-        tableView.sectionFooterHeight = 18
+        tableView.sectionHeaderHeight = 14
+        tableView.sectionFooterHeight = 14
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(closeRevealedCardsFromTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delegate = self
+        tableView.addGestureRecognizer(tapGesture)
         view.addSubview(tableView)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -512,16 +1063,23 @@ class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSour
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        max(context.alarmManager.sortedAlarms.count, 1)
+        let count = context.alarmManager.sortedAlarms.count
+        if count == 0 {
+            let emptyLabel = UILabel()
+            emptyLabel.text = "알람이 없습니다"
+            emptyLabel.textColor = WakeyUIKitStyle.subtext
+            emptyLabel.font = .systemFont(ofSize: 15)
+            emptyLabel.textAlignment = .center
+            tableView.backgroundView = emptyLabel
+        } else {
+            tableView.backgroundView = nil
+        }
+        return count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         let alarms = context.alarmManager.sortedAlarms
-        guard !alarms.isEmpty else {
-            configureCardCell(cell, title: "알람이 없어요", subtitle: "새 알람송을 만들어 알람을 추가하세요", accessory: nil)
-            return cell
-        }
 
         let alarm = alarms[indexPath.row]
         let toggle = UISwitch()
@@ -529,29 +1087,51 @@ class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSour
         toggle.onTintColor = WakeyUIKitStyle.primary
         toggle.tag = indexPath.row
         toggle.addTarget(self, action: #selector(toggleAlarm(_:)), for: .valueChanged)
-        let alarmTitle = alarm.alarmName.flatMap { $0.isEmpty ? nil : $0 } ?? alarm.purpose.rawValue
-        configureCardCell(
-            cell,
-            title: "\(alarm.time.alarmTimeText)  \(alarmTitle)",
-            subtitle: "\(alarm.mood.rawValue) · \(alarm.memo)",
-            accessory: toggle
-        )
+        configureAlarmCardCell(cell, alarm: alarm, accessory: toggle, index: indexPath.row)
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        guard !ignoresNextTapClose else { return }
+        if let card = tableView.cellForRow(at: indexPath)?.contentView.viewWithTag(alarmCardTag),
+           abs(card.transform.tx) > 1 {
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+                card.transform = .identity
+                self.deleteButton(for: card)?.alpha = 0
+            }
+            return
+        }
+
         let alarms = context.alarmManager.sortedAlarms
         guard alarms.indices.contains(indexPath.row) else { return }
-        navigationController?.pushViewController(AlarmDetailUIKitViewController(alarm: alarms[indexPath.row]), animated: true)
+        let alarm = alarms[indexPath.row]
+        let controller = CreateAlarmUIKitViewController(alarm: alarm, isReadOnly: isAIAlarm(alarm))
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
     }
 
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        guard editingStyle == .delete else { return }
-        let alarm = context.alarmManager.sortedAlarms[indexPath.row]
-        context.notificationManager.cancel(alarm)
-        context.alarmManager.delete(alarm)
-        tableView.reloadData()
+    @objc private func openAlarmSongFromButton(_ sender: UIButton) {
+        let alarms = context.alarmManager.sortedAlarms
+        guard alarms.indices.contains(sender.tag) else { return }
+        let controller = AlarmDetailUIKitViewController(alarm: alarms[sender.tag])
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var view = touch.view
+        while let currentView = view {
+            if currentView is UIButton {
+                return false
+            }
+            view = currentView.superview
+        }
+        return true
+    }
+
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        nil
     }
 
     @objc private func toggleAlarm(_ sender: UISwitch) {
@@ -567,12 +1147,304 @@ class AlarmListUIKitViewController: WakeyBaseViewController, UITableViewDataSour
     }
 
     @objc private func openCreate() {
-        navigationController?.pushViewController(CreateAlarmUIKitViewController(), animated: true)
+        let controller = CreateAlarmUIKitViewController()
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    private func configureAlarmCardCell(_ cell: UITableViewCell, alarm: AlarmSong, accessory: UIView, index: Int) {
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.backgroundColor = .clear
+        cell.contentView.backgroundColor = .clear
+        cell.contentConfiguration = nil
+        cell.accessoryView = nil
+        cell.selectionStyle = .none
+        cell.clipsToBounds = false
+        cell.contentView.clipsToBounds = false
+        cell.contentView.alpha = 1
+        cell.contentView.transform = .identity
+
+        let deleteButton = UIButton(type: .system)
+        deleteButton.tag = deleteButtonTag
+        deleteButton.accessibilityIdentifier = "\(index)"
+        deleteButton.backgroundColor = WakeyUIKitStyle.destructive
+        deleteButton.tintColor = .white
+        deleteButton.alpha = 0
+        deleteButton.setImage(UIImage(systemName: "trash.fill"), for: .normal)
+        deleteButton.layer.cornerRadius = 20
+        deleteButton.clipsToBounds = true
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteButton.addTarget(self, action: #selector(deleteAlarmFromButton(_:)), for: .touchUpInside)
+        cell.contentView.addSubview(deleteButton)
+
+        let aiAlarm = isAIAlarm(alarm)
+        let card: UIView
+        if aiAlarm {
+            card = WakeyUIKitStyle.cardView()
+            card.layer.borderColor = WakeyUIKitStyle.primary.withAlphaComponent(0.34).cgColor
+            card.layer.borderWidth = 2.5
+        } else {
+            card = WakeyUIKitStyle.cardView()
+        }
+        card.tag = alarmCardTag
+        card.translatesAutoresizingMaskIntoConstraints = false
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleAlarmCardPan(_:)))
+        pan.cancelsTouchesInView = false
+        card.addGestureRecognizer(pan)
+        cell.contentView.addSubview(card)
+
+        let name = alarm.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let topView: UIView
+        if aiAlarm {
+            let play = UIButton(type: .system)
+            play.tag = index
+            play.setImage(UIImage(systemName: "play.fill"), for: .normal)
+            play.tintColor = WakeyUIKitStyle.primary
+            play.backgroundColor = .clear
+            play.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .bold), forImageIn: .normal)
+            play.widthAnchor.constraint(equalToConstant: 26).isActive = true
+            play.heightAnchor.constraint(equalToConstant: 26).isActive = true
+            play.addTarget(self, action: #selector(openAlarmSongFromButton(_:)), for: .touchUpInside)
+
+            let titleText = name?.isEmpty == false ? name! : "Wakey Alarm Song"
+            let titleLabel = label("\(titleText) · \(alarm.purpose.rawValue)", size: 14, weight: .semibold, color: WakeyUIKitStyle.text, lines: 1)
+            titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+            let row = UIStackView(arrangedSubviews: [play, titleLabel])
+            row.axis = .horizontal
+            row.alignment = .center
+            row.spacing = 10
+            topView = row
+        } else {
+            topView = label(name?.isEmpty == false ? name! : " ", size: 14, weight: .semibold, color: WakeyUIKitStyle.text, lines: 1)
+        }
+
+        let timeLabel = timeLabel(for: alarm.time)
+        let scheduleLabel = scheduleLabel(for: alarm)
+        let timeView: UIView
+        timeView = timeLabel
+
+        let leftStack = UIStackView(arrangedSubviews: [topView, timeView, scheduleLabel])
+        leftStack.axis = .vertical
+        leftStack.spacing = 4
+        leftStack.alignment = .leading
+
+        let rightStack = UIStackView()
+        rightStack.axis = .vertical
+        rightStack.alignment = .center
+        rightStack.addArrangedSubview(accessory)
+
+        let contentRow = UIStackView(arrangedSubviews: [leftStack, UIView(), rightStack])
+        contentRow.axis = .horizontal
+        contentRow.alignment = .center
+        contentRow.spacing = 12
+        contentRow.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(contentRow)
+
+        NSLayoutConstraint.activate([
+            deleteButton.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
+            deleteButton.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -22),
+            deleteButton.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8),
+            deleteButton.widthAnchor.constraint(equalToConstant: deleteRevealWidth),
+
+            card.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
+            card.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 22),
+            card.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -22),
+            card.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6),
+            contentRow.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
+            contentRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            contentRow.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            contentRow.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14)
+        ])
+
+        cell.alpha = alarm.isEnabled ? 1 : 0.62
+    }
+
+    private func timeLabel(for date: Date) -> UILabel {
+        let periodFormatter = DateFormatter()
+        periodFormatter.locale = Locale(identifier: "en_US_POSIX")
+        periodFormatter.dateFormat = "a"
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "ko_KR")
+        timeFormatter.dateFormat = "h:mm"
+
+        let text = NSMutableAttributedString(
+            string: "\(periodFormatter.string(from: date)) ",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 12, weight: .bold),
+                .foregroundColor: WakeyUIKitStyle.text
+            ]
+        )
+        text.append(NSAttributedString(
+            string: timeFormatter.string(from: date),
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 36, weight: .medium),
+                .foregroundColor: WakeyUIKitStyle.text
+            ]
+        ))
+
+        let label = UILabel()
+        label.attributedText = text
+        label.numberOfLines = 1
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return label
+    }
+
+    private func scheduleLabel(for alarm: AlarmSong) -> UILabel {
+        let label = UILabel()
+        label.numberOfLines = 1
+
+        if alarm.repeatDays.isEmpty {
+            label.text = alarm.date.koreanMonthDayWeekdayText
+            label.font = .systemFont(ofSize: 14, weight: .medium)
+            label.textColor = WakeyUIKitStyle.subtext
+            return label
+        }
+
+        let text = NSMutableAttributedString()
+        for (index, day) in weekdayDisplayOrder.enumerated() {
+            if index > 0 {
+                text.append(NSAttributedString(string: " "))
+            }
+            text.append(NSAttributedString(
+                string: day.rawValue,
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 15, weight: .semibold),
+                    .foregroundColor: alarm.repeatDays.contains(day)
+                        ? WakeyUIKitStyle.primary
+                        : WakeyUIKitStyle.subtext.withAlphaComponent(0.34)
+                ]
+            ))
+        }
+        label.attributedText = text
+        return label
+    }
+
+    private func smallPurposeChip(text: String) -> UILabel {
+        let chip = UILabel()
+        chip.text = text
+        chip.font = .systemFont(ofSize: 12, weight: .semibold)
+        chip.textColor = WakeyUIKitStyle.text
+        chip.textAlignment = .center
+        chip.backgroundColor = WakeyUIKitStyle.primary
+        chip.layer.cornerRadius = 12.5
+        chip.clipsToBounds = true
+        chip.widthAnchor.constraint(greaterThanOrEqualToConstant: 54).isActive = true
+        return chip
+    }
+
+    private func isAIAlarm(_ alarm: AlarmSong) -> Bool {
+        alarm.isAIAlarmSong
+    }
+
+    @objc private func deleteAlarmFromButton(_ sender: UIButton) {
+        let alarms = context.alarmManager.sortedAlarms
+        guard let indexText = sender.accessibilityIdentifier,
+              let index = Int(indexText),
+              alarms.indices.contains(index) else {
+            tableView.reloadData()
+            return
+        }
+        let alarm = alarms[index]
+        context.notificationManager.cancel(alarm)
+        let indexPath = IndexPath(row: index, section: 0)
+        let deleteRows = { [weak self] in
+            guard let self else { return }
+            self.context.alarmManager.deleteAlarm(alarm)
+            let remainingCount = self.context.alarmManager.sortedAlarms.count
+            if remainingCount == 0 {
+                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) { [weak self] in
+                    self?.tableView.reloadData()
+                }
+            } else {
+                self.tableView.performBatchUpdates {
+                    self.tableView.deleteRows(at: [indexPath], with: .fade)
+                } completion: { [weak self] _ in
+                    self?.tableView.reloadData()
+                }
+            }
+        }
+
+        guard let cell = tableView.cellForRow(at: indexPath) else {
+            deleteRows()
+            return
+        }
+
+        UIView.animate(withDuration: 0.16, delay: 0, options: [.curveEaseOut]) {
+            cell.contentView.alpha = 0
+            cell.contentView.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { _ in
+            deleteRows()
+        }
+    }
+
+    @objc private func handleAlarmCardPan(_ gesture: UIPanGestureRecognizer) {
+        guard let card = gesture.view else { return }
+
+        switch gesture.state {
+        case .began:
+            closeRevealedCards(excluding: card)
+            card.layer.setValue(card.transform.tx, forKey: "swipeStartX")
+        case .changed:
+            let startX = (card.layer.value(forKey: "swipeStartX") as? NSNumber)?.doubleValue ?? 0
+            let translation = gesture.translation(in: card.superview).x
+            let targetX = min(0, max(-deleteRevealWidth, CGFloat(startX) + translation))
+            card.transform = CGAffineTransform(translationX: targetX, y: 0)
+            updateDeleteButtonAlpha(for: card)
+        case .ended, .cancelled, .failed:
+            let velocityX = gesture.velocity(in: card.superview).x
+            let shouldReveal = card.transform.tx < -8 || velocityX < -120
+            ignoresNextTapClose = true
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) {
+                card.transform = shouldReveal ? CGAffineTransform(translationX: -self.deleteRevealWidth, y: 0) : .identity
+                self.deleteButton(for: card)?.alpha = shouldReveal ? 1 : 0
+            } completion: { _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.ignoresNextTapClose = false
+                }
+            }
+        default:
+            break
+        }
+    }
+
+    @objc private func closeRevealedCardsFromTap(_ gesture: UITapGestureRecognizer) {
+        guard !ignoresNextTapClose else { return }
+        let point = gesture.location(in: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point),
+           let cell = tableView.cellForRow(at: indexPath),
+           let card = cell.contentView.viewWithTag(alarmCardTag),
+           abs(card.transform.tx) <= 1 {
+            return
+        }
+        closeRevealedCards()
+    }
+
+    private func closeRevealedCards(excluding excludedCard: UIView? = nil) {
+        for cell in tableView.visibleCells {
+            guard let card = cell.contentView.viewWithTag(alarmCardTag), card !== excludedCard, abs(card.transform.tx) > 1 else { continue }
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+                card.transform = .identity
+                self.deleteButton(for: card)?.alpha = 0
+            }
+        }
+    }
+
+    private func updateDeleteButtonAlpha(for card: UIView) {
+        deleteButton(for: card)?.alpha = min(1, max(0, abs(card.transform.tx) / deleteRevealWidth))
+    }
+
+    private func deleteButton(for card: UIView) -> UIButton? {
+        card.superview?.viewWithTag(deleteButtonTag) as? UIButton
     }
 }
 
 final class CreateAlarmUIKitViewController: WakeyBaseViewController {
     private static let memoPlaceholder = "가사에 포함하고 싶은 내용을 입력하세요."
+    private let editingAlarm: AlarmSong?
+    private let isReadOnly: Bool
     private let timePicker = UIDatePicker()
     private let repeatSummaryLabel = UILabel()
     private let alarmNameField = UITextField()
@@ -602,26 +1474,46 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
     private var selectedSpecificDate: Date?
     private var bundledAlarmSounds: [URL] = []
     private var selectedDefaultSoundURL: URL?
+    private var selectedDefaultLibrarySong: AlarmSong?
     private var previewVolume: Float = 0.8
     private var weekdayButtons: [Weekday: UIButton] = [:]
     private let weekdayDisplayOrder: [Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
 
+    init(alarm: AlarmSong? = nil, isReadOnly: Bool = false) {
+        self.editingAlarm = alarm
+        self.isReadOnly = isReadOnly
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        editingAlarm = nil
+        isReadOnly = false
+        super.init(coder: coder)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "새 알람송 만들기"
+        hidesBottomBarWhenPushed = true
+        title = isReadOnly ? "알람 보기" : (editingAlarm == nil ? "새 알람송 만들기" : "알람 수정")
         bundledAlarmSounds = AudioFileService.bundledAlarmSoundURLs()
         selectedDefaultSoundURL = bundledAlarmSounds.first
 
         timePicker.datePickerMode = .time
-        timePicker.date = Date()
+        timePicker.date = editingAlarm?.time ?? Date()
         timePicker.preferredDatePickerStyle = .wheels
         timePicker.transform = CGAffineTransform(scaleX: 0.78, y: 0.78)
 
         let stack = makeCreateAlarmLayout()
+        if isReadOnly {
+            stack.addArrangedSubview(readOnlyNoticeLabel())
+        }
         stack.addArrangedSubview(card(scheduleAndAlarmSettingsStack(), padding: 20))
 
         customSongSwitch.isOn = true
         customSongSwitch.addTarget(self, action: #selector(customSongSwitchChanged), for: .valueChanged)
+        locationSwitch.isOn = false
+        weatherSwitch.isOn = false
+        calendarSwitch.isOn = false
 
         nicknameField.placeholder = "닉네임을 입력하세요"
         nicknameField.text = WakeyProfile.nickname
@@ -649,7 +1541,7 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
         memoView.textContainer.lineFragmentPadding = 0
         memoView.heightAnchor.constraint(equalToConstant: 110).isActive = true
 
-        weatherSwitch.isOn = true
+        weatherSwitch.isOn = false
         stack.addArrangedSubview(card(songGenerationStack(), padding: 20))
 
         generateButton.addTarget(self, action: #selector(generate), for: .touchUpInside)
@@ -660,6 +1552,14 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
         updateScheduleControls()
         updateSnoozeControls()
         updateCustomSongControls()
+        applyEditingAlarmIfNeeded()
+        if editingAlarm != nil && !isReadOnly {
+            customSongSwitch.isUserInteractionEnabled = false
+            customSongSwitch.alpha = 0.45
+        }
+        if isReadOnly {
+            applyReadOnlyMode()
+        }
     }
 
     private func makeCreateAlarmLayout() -> UIStackView {
@@ -714,27 +1614,33 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
 
             bottomFadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomFadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomFadeView.topAnchor.constraint(equalTo: generateButton.topAnchor, constant: -72),
+            bottomFadeView.topAnchor.constraint(equalTo: generateButton.topAnchor, constant: -52),
             bottomFadeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             topFadeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topFadeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topFadeView.topAnchor.constraint(equalTo: timeContainer.bottomAnchor, constant: -28),
-            topFadeView.heightAnchor.constraint(equalToConstant: 78),
+            topFadeView.topAnchor.constraint(equalTo: timeContainer.bottomAnchor, constant: -14),
+            topFadeView.heightAnchor.constraint(equalToConstant: 52),
 
             scrollView.topAnchor.constraint(equalTo: timeContainer.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: generateButton.topAnchor, constant: -8),
 
-            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 15),
             stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 22),
             stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -22),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -15),
             stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -44)
         ])
 
         return stackView
+    }
+
+    private func readOnlyNoticeLabel() -> UILabel {
+        let notice = label("AI 알람송을 재생하는 알람은 수정할 수 없어요", size: 13, weight: .medium, color: WakeyUIKitStyle.subtext, lines: 0)
+        notice.textAlignment = .center
+        return notice
     }
 
     private func labeled(_ title: String, _ view: UIView) -> UIStackView {
@@ -896,7 +1802,7 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
         defaultAlarmCard = defaultAlarm
 
         let stack = UIStackView(arrangedSubviews: [
-            optionRow(title: "AI 알림송 생성", control: customSongSwitch),
+            optionRow(title: "AI 알람송 생성", control: customSongSwitch),
             divider(),
             aiOptions,
             defaultAlarm
@@ -913,13 +1819,12 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
         selectedRow.alignment = .center
         selectedRow.spacing = 12
 
-        let icon = UIImageView(image: UIImage(systemName: "bell.fill"))
+        let icon = UIImageView(image: UIImage(systemName: "speaker.wave.2.fill"))
         icon.tintColor = WakeyUIKitStyle.primary
-        icon.contentMode = .center
-        icon.backgroundColor = WakeyUIKitStyle.primary.withAlphaComponent(0.12)
-        icon.layer.cornerRadius = 20
-        icon.widthAnchor.constraint(equalToConstant: 40).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        icon.contentMode = .scaleAspectFit
+        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 25, weight: .semibold)
+        icon.widthAnchor.constraint(equalToConstant: 46).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 46).isActive = true
 
         selectedDefaultSoundTitleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
         selectedDefaultSoundTitleLabel.textColor = WakeyUIKitStyle.text
@@ -971,8 +1876,13 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
     }
 
     private func updateSelectedDefaultSoundLabels() {
-        selectedDefaultSoundTitleLabel.text = selectedDefaultSoundURL?.deletingPathExtension().lastPathComponent ?? "기본 알림음"
-        selectedDefaultSoundSubtitleLabel.text = bundledAlarmSounds.isEmpty ? "AlarmSounds 폴더에 사운드를 넣어주세요" : "탭해서 알림음을 고르고 미리 듣기"
+        if let selectedDefaultLibrarySong {
+            selectedDefaultSoundTitleLabel.text = selectedDefaultLibrarySong.alarmName ?? "AI 알람송"
+            selectedDefaultSoundSubtitleLabel.text = "라이브러리 AI 알람송"
+        } else {
+            selectedDefaultSoundTitleLabel.text = selectedDefaultSoundURL?.deletingPathExtension().lastPathComponent ?? "기본 알림음"
+            selectedDefaultSoundSubtitleLabel.text = bundledAlarmSounds.isEmpty ? "AlarmSounds 폴더에 사운드를 넣어주세요" : "탭해서 알림음을 고르고 미리 듣기"
+        }
     }
 
     private func divider() -> UIView {
@@ -1007,17 +1917,25 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
     }
 
     @objc private func openSoundPicker() {
-        guard !bundledAlarmSounds.isEmpty else {
-            showMessage("AlarmSounds 폴더에 wav, caf, aiff 파일을 넣어주세요.")
+        guard !bundledAlarmSounds.isEmpty || !context.alarmManager.generatedSongs.isEmpty else {
+            showMessage("선택할 알림음이나 AI 알람송이 없어요.")
             return
         }
 
         let controller = AlarmSoundSelectionUIKitViewController(
             sounds: bundledAlarmSounds,
+            librarySongs: context.alarmManager.generatedSongs,
             selectedSoundURL: selectedDefaultSoundURL,
+            selectedLibrarySongId: selectedDefaultLibrarySong?.id,
             volume: previewVolume,
             onSelect: { [weak self] soundURL in
+                self?.selectedDefaultLibrarySong = nil
                 self?.selectedDefaultSoundURL = soundURL
+                self?.updateSelectedDefaultSoundLabels()
+            },
+            onSelectLibrarySong: { [weak self] song in
+                self?.selectedDefaultLibrarySong = song
+                self?.selectedDefaultSoundURL = song.originalAudioURL
                 self?.updateSelectedDefaultSoundLabels()
             },
             onVolumeChange: { [weak self] volume in
@@ -1180,13 +2098,94 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
         }
     }
 
+    private func applyEditingAlarmIfNeeded() {
+        guard let alarm = editingAlarm else { return }
+        let usesCustomSong = alarm.isAIAlarmSong
+
+        timePicker.date = alarm.time
+        selectedSpecificDate = alarm.repeatDays.isEmpty ? alarm.date : nil
+        selectedWeekdays = alarm.repeatDays
+        alarmNameField.text = alarm.alarmName ?? ""
+        nicknameField.text = alarm.nickname
+        customSongSwitch.isOn = usesCustomSong
+        snoozeSwitch.isOn = alarm.snoozeEnabled ?? true
+        snoozeIntervalControl.selectedSegmentIndex = snoozeIntervalIndex(for: alarm.snoozeIntervalMinutes ?? 5)
+        snoozeCustomIntervalField.text = "\(alarm.snoozeIntervalMinutes ?? 5)"
+        snoozeCountControl.selectedSegmentIndex = snoozeRepeatIndex(for: alarm.snoozeRepeatCount)
+        purposeControl.selectedSegmentIndex = AlarmPurpose.allCases.firstIndex(of: alarm.purpose) ?? 0
+        moodControl.selectedSegmentIndex = AlarmMood.allCases.firstIndex(of: alarm.mood) ?? 0
+        memoView.text = alarm.memo.isEmpty ? Self.memoPlaceholder : alarm.memo
+        memoView.textColor = alarm.memo.isEmpty ? WakeyUIKitStyle.subtext : WakeyUIKitStyle.text
+        locationSwitch.isOn = alarm.locationSummary != nil
+        weatherSwitch.isOn = alarm.weatherSummary != nil
+        calendarSwitch.isOn = alarm.calendarSummary != nil
+        previewVolume = alarm.resolvedAlarmVolume
+        soundVolumeSlider.value = previewVolume
+        updateSoundVolumeLabel()
+
+        if let soundFileName = alarm.notificationAudioURL?.lastPathComponent,
+           let soundURL = bundledAlarmSounds.first(where: { $0.lastPathComponent == soundFileName }) {
+            selectedDefaultSoundURL = soundURL
+            updateSelectedDefaultSoundLabels()
+        }
+
+        updateScheduleControls()
+        updateSnoozeControls()
+        updateCustomSongControls()
+    }
+
+    private func snoozeIntervalIndex(for minutes: Int) -> Int {
+        switch minutes {
+        case 5: return 0
+        case 10: return 1
+        case 15: return 2
+        case 30: return 3
+        default: return 4
+        }
+    }
+
+    private func snoozeRepeatIndex(for count: Int?) -> Int {
+        switch count {
+        case 5: return 1
+        case nil: return 2
+        default: return 0
+        }
+    }
+
+    private func applyReadOnlyMode() {
+        generateButton.isEnabled = false
+        generateButton.alpha = 0.35
+        disableEditableControls(in: view)
+    }
+
+    private func disableEditableControls(in root: UIView) {
+        for subview in root.subviews {
+            if let control = subview as? UIControl {
+                control.isUserInteractionEnabled = false
+                control.alpha = min(control.alpha, 0.55)
+            }
+            if let textView = subview as? UITextView {
+                textView.isEditable = false
+                textView.isSelectable = false
+                textView.alpha = min(textView.alpha, 0.55)
+            }
+            if let picker = subview as? UIDatePicker {
+                picker.isUserInteractionEnabled = false
+                picker.alpha = min(picker.alpha, 0.55)
+            }
+            if !(subview is UIScrollView) {
+                subview.gestureRecognizers?.forEach { $0.isEnabled = false }
+            }
+            disableEditableControls(in: subview)
+        }
+    }
+
     @objc private func generate() {
+        guard !isReadOnly else { return }
+        generateButton.isEnabled = false
+        generateButton.alpha = 0.72
         let alarmName = (alarmNameField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let nickname = (nicknameField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !customSongSwitch.isOn || !nickname.isEmpty else {
-            showMessage("부를 이름을 입력하세요.")
-            return
-        }
 
         if !nickname.isEmpty {
             WakeyProfile.nickname = nickname
@@ -1201,6 +2200,7 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
             includeNameInLyrics: !nickname.isEmpty,
             useCustomSong: customSongSwitch.isOn,
             defaultAlarmSoundFileName: selectedDefaultSoundURL?.lastPathComponent,
+            defaultAlarmVolume: previewVolume,
             snoozeEnabled: snoozeSwitch.isOn,
             snoozeIntervalMinutes: selectedSnoozeIntervalMinutes(),
             snoozeRepeatCount: selectedSnoozeRepeatCount(),
@@ -1212,7 +2212,116 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
             useWeather: weatherSwitch.isOn,
             useCalendar: calendarSwitch.isOn
         )
-        navigationController?.pushViewController(GeneratingUIKitViewController(draft: draft), animated: true)
+
+        guard customSongSwitch.isOn else {
+            saveDefaultAlarm(from: draft)
+            return
+        }
+
+        generateButton.isEnabled = true
+        generateButton.alpha = 1
+        let controller = GeneratingUIKitViewController(draft: draft)
+        controller.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(controller, animated: true)
+    }
+
+    private func saveDefaultAlarm(from draft: AlarmDraft) {
+        Task { [weak self] in
+            guard let self else { return }
+            var notificationAudioURL: URL?
+            let alarmId = editingAlarm?.id ?? UUID()
+            if let sourceURL = selectedDefaultLibrarySong?.originalAudioURL
+                ?? selectedDefaultSoundURL {
+                notificationAudioURL = try? await audioFileService.createShortNotificationAudio(
+                    from: sourceURL,
+                    alarmId: alarmId,
+                    volume: draft.defaultAlarmVolume
+                )
+            }
+
+            var alarm = AlarmSong(
+                id: alarmId,
+                time: draft.time,
+                date: draft.selectedDate ?? Date(),
+                isEnabled: editingAlarm?.isEnabled ?? true,
+                alarmName: draft.alarmName.isEmpty ? nil : draft.alarmName,
+                purpose: draft.purpose,
+                mood: draft.mood,
+                nickname: draft.nickname,
+                memo: draft.memo,
+                repeatDays: draft.repeatDays,
+                snoozeEnabled: draft.snoozeEnabled,
+                snoozeIntervalMinutes: draft.snoozeIntervalMinutes,
+                snoozeRepeatCount: draft.snoozeRepeatCount,
+                notificationAudioFilePath: notificationAudioURL?.lastPathComponent,
+                alarmVolume: draft.defaultAlarmVolume,
+                usesAIAlarmSong: false,
+                createdAt: editingAlarm?.createdAt ?? Date()
+            )
+
+            if let editingAlarm {
+                context.notificationManager.cancel(editingAlarm)
+            }
+            do {
+                try await context.notificationManager.schedule(alarm)
+            } catch {
+                alarm.isEnabled = false
+            }
+
+            if editingAlarm == nil {
+                context.alarmManager.add(alarm)
+            } else {
+                context.alarmManager.update(alarm)
+            }
+            generateButton.isEnabled = true
+            generateButton.alpha = 1
+            navigationController?.popViewController(animated: true)
+        }
+    }
+
+    private func defaultAlarmCountdownText(for alarm: AlarmSong) -> String {
+        guard let fireDate = nextFireDate(for: alarm) else {
+            return "알람이 저장되었습니다."
+        }
+
+        let seconds = max(60, Int(fireDate.timeIntervalSince(Date())))
+        let days = seconds / 86_400
+        let hours = (seconds % 86_400) / 3_600
+        let minutes = (seconds % 3_600) / 60
+        let dayText = days > 0 ? "\(days)일 " : ""
+        return "\(dayText)\(hours)시간 \(minutes)분 뒤에 알람이 울립니다"
+    }
+
+    private func nextFireDate(for alarm: AlarmSong) -> Date? {
+        let calendar = Calendar.current
+        let time = calendar.dateComponents([.hour, .minute], from: alarm.time)
+        let now = Date()
+
+        if alarm.repeatDays.isEmpty {
+            let base = calendar.startOfDay(for: alarm.date)
+            let date = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: base) ?? alarm.date
+            return date > now ? date : calendar.date(byAdding: .day, value: 1, to: date)
+        }
+
+        return (0..<14).compactMap { offset -> Date? in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { return nil }
+            guard alarm.repeatDays.contains(weekday(for: day)) else { return nil }
+            let candidate = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: day)
+            guard let candidate, candidate > now else { return nil }
+            return candidate
+        }.min()
+    }
+
+    private func weekday(for date: Date) -> Weekday {
+        switch Calendar.current.component(.weekday, from: date) {
+        case 1: return .sunday
+        case 2: return .monday
+        case 3: return .tuesday
+        case 4: return .wednesday
+        case 5: return .thursday
+        case 6: return .friday
+        default: return .saturday
+        }
     }
 }
 
@@ -1232,9 +2341,12 @@ extension CreateAlarmUIKitViewController: UITextViewDelegate {
 
 final class AlarmSoundSelectionUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate {
     private let sounds: [URL]
+    private let librarySongs: [AlarmSong]
     private var selectedSoundURL: URL?
+    private var selectedLibrarySongId: UUID?
     private var volume: Float
     private let onSelect: (URL) -> Void
+    private let onSelectLibrarySong: (AlarmSong) -> Void
     private let onVolumeChange: (Float) -> Void
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let volumeSlider = UISlider()
@@ -1243,24 +2355,33 @@ final class AlarmSoundSelectionUIKitViewController: WakeyBaseViewController, UIT
 
     init(
         sounds: [URL],
+        librarySongs: [AlarmSong],
         selectedSoundURL: URL?,
+        selectedLibrarySongId: UUID?,
         volume: Float,
         onSelect: @escaping (URL) -> Void,
+        onSelectLibrarySong: @escaping (AlarmSong) -> Void,
         onVolumeChange: @escaping (Float) -> Void
     ) {
         self.sounds = sounds
+        self.librarySongs = librarySongs
         self.selectedSoundURL = selectedSoundURL
+        self.selectedLibrarySongId = selectedLibrarySongId
         self.volume = volume
         self.onSelect = onSelect
+        self.onSelectLibrarySong = onSelectLibrarySong
         self.onVolumeChange = onVolumeChange
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) {
         sounds = []
+        librarySongs = []
         selectedSoundURL = nil
+        selectedLibrarySongId = nil
         volume = 0.8
         onSelect = { _ in }
+        onSelectLibrarySong = { _ in }
         onVolumeChange = { _ in }
         super.init(coder: coder)
     }
@@ -1337,13 +2458,11 @@ final class AlarmSoundSelectionUIKitViewController: WakeyBaseViewController, UIT
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        sounds.count
+        sounds.count + 1
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "soundCell", for: indexPath)
-        let soundURL = sounds[indexPath.row]
-        let isSelected = selectedSoundURL?.lastPathComponent == soundURL.lastPathComponent
 
         cell.backgroundColor = WakeyUIKitStyle.background
         cell.selectionStyle = .default
@@ -1352,18 +2471,54 @@ final class AlarmSoundSelectionUIKitViewController: WakeyBaseViewController, UIT
         cell.contentView.layer.borderWidth = 0
 
         var configuration = UIListContentConfiguration.cell()
-        configuration.text = soundURL.deletingPathExtension().lastPathComponent
-        configuration.textProperties.font = .systemFont(ofSize: 19, weight: .semibold)
+        if indexPath.row == 0 {
+            configuration.text = "라이브러리에서 AI 알람송 선택"
+            configuration.secondaryText = librarySongs.isEmpty ? "저장된 AI 알람송이 없어요" : "\(librarySongs.count)개의 알람송"
+            configuration.image = UIImage(systemName: "music.note.list")
+            configuration.textProperties.font = .systemFont(ofSize: 18, weight: .semibold)
+            configuration.secondaryTextProperties.font = .systemFont(ofSize: 13, weight: .regular)
+            configuration.secondaryTextProperties.color = WakeyUIKitStyle.subtext
+            configuration.imageProperties.tintColor = WakeyUIKitStyle.primary
+            cell.accessoryType = .disclosureIndicator
+        } else {
+            let soundURL = sounds[indexPath.row - 1]
+            let isSelected = selectedLibrarySongId == nil && selectedSoundURL?.lastPathComponent == soundURL.lastPathComponent
+            configuration.text = soundURL.deletingPathExtension().lastPathComponent
+            configuration.textProperties.font = .systemFont(ofSize: 19, weight: .semibold)
+            cell.accessoryType = isSelected ? .checkmark : .none
+        }
         configuration.textProperties.color = WakeyUIKitStyle.text
         cell.contentConfiguration = configuration
-        cell.accessoryType = isSelected ? .checkmark : .none
         cell.tintColor = WakeyUIKitStyle.primary
 
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let soundURL = sounds[indexPath.row]
+        if indexPath.row == 0 {
+            let controller = AIAlarmSongSelectionUIKitViewController(
+                songs: librarySongs,
+                selectedSongId: selectedLibrarySongId,
+                volume: volume,
+                onSelect: { [weak self] song in
+                    self?.selectedLibrarySongId = song.id
+                    self?.selectedSoundURL = song.originalAudioURL
+                    self?.onSelectLibrarySong(song)
+                    self?.tableView.reloadData()
+                },
+                onVolumeChange: { [weak self] volume in
+                    self?.volume = volume
+                    self?.volumeSlider.value = volume
+                    self?.updateVolumeLabel()
+                    self?.onVolumeChange(volume)
+                }
+            )
+            navigationController?.pushViewController(controller, animated: true)
+            return
+        }
+
+        let soundURL = sounds[indexPath.row - 1]
+        selectedLibrarySongId = nil
         selectedSoundURL = soundURL
         onSelect(soundURL)
         preview(soundURL)
@@ -1402,11 +2557,185 @@ final class AlarmSoundSelectionUIKitViewController: WakeyBaseViewController, UIT
     }
 }
 
+final class AIAlarmSongSelectionUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate {
+    private let songs: [AlarmSong]
+    private var selectedSongId: UUID?
+    private var volume: Float
+    private let onSelect: (AlarmSong) -> Void
+    private let onVolumeChange: (Float) -> Void
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let volumeSlider = UISlider()
+    private let volumeValueLabel = UILabel()
+    private var previewPlayer: AVAudioPlayer?
+
+    init(
+        songs: [AlarmSong],
+        selectedSongId: UUID?,
+        volume: Float,
+        onSelect: @escaping (AlarmSong) -> Void,
+        onVolumeChange: @escaping (Float) -> Void
+    ) {
+        self.songs = songs
+        self.selectedSongId = selectedSongId
+        self.volume = volume
+        self.onSelect = onSelect
+        self.onVolumeChange = onVolumeChange
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        songs = []
+        selectedSongId = nil
+        volume = 0.8
+        onSelect = { _ in }
+        onVolumeChange = { _ in }
+        super.init(coder: coder)
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "AI 알람송 선택"
+        setupTable()
+        setupVolumeBar()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        previewPlayer?.stop()
+    }
+
+    private func setupTable() {
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.backgroundColor = WakeyUIKitStyle.background
+        tableView.separatorStyle = .singleLine
+        tableView.separatorColor = UIColor.black.withAlphaComponent(0.08)
+        tableView.rowHeight = 68
+        tableView.tableFooterView = UIView()
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "aiSongCell")
+        view.addSubview(tableView)
+    }
+
+    private func setupVolumeBar() {
+        let container = WakeyUIKitStyle.cardView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        volumeSlider.minimumValue = 0
+        volumeSlider.maximumValue = 1
+        volumeSlider.value = volume
+        volumeSlider.minimumTrackTintColor = WakeyUIKitStyle.primary
+        volumeSlider.maximumTrackTintColor = UIColor.black.withAlphaComponent(0.10)
+        volumeSlider.addTarget(self, action: #selector(volumeChanged(_:)), for: .valueChanged)
+        volumeSlider.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(volumeTapped(_:))))
+
+        volumeValueLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        volumeValueLabel.textColor = WakeyUIKitStyle.subtext
+        updateVolumeLabel()
+
+        let header = UIStackView(arrangedSubviews: [
+            label("알람 음량", size: 14, weight: .medium, color: WakeyUIKitStyle.subtext),
+            UIView(),
+            volumeValueLabel
+        ])
+        header.axis = .horizontal
+        header.alignment = .center
+
+        let stack = UIStackView(arrangedSubviews: [header, volumeSlider])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(stack)
+        view.addSubview(container)
+
+        NSLayoutConstraint.activate([
+            container.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
+            container.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -22),
+            container.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -18),
+            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 18),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -18),
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: container.topAnchor, constant: -12)
+        ])
+    }
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        songs.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "aiSongCell", for: indexPath)
+        let song = songs[indexPath.row]
+
+        cell.backgroundColor = WakeyUIKitStyle.background
+        cell.selectionStyle = .default
+        cell.contentView.backgroundColor = WakeyUIKitStyle.background
+
+        var configuration = UIListContentConfiguration.subtitleCell()
+        configuration.text = song.alarmName ?? "AI 알람송"
+        configuration.secondaryText = song.generatedAt?.formatted(date: .abbreviated, time: .omitted) ?? song.purpose.rawValue
+        configuration.image = UIImage(systemName: "music.note")
+        configuration.textProperties.font = .systemFont(ofSize: 18, weight: .semibold)
+        configuration.textProperties.color = WakeyUIKitStyle.text
+        configuration.secondaryTextProperties.font = .systemFont(ofSize: 13, weight: .regular)
+        configuration.secondaryTextProperties.color = WakeyUIKitStyle.subtext
+        configuration.imageProperties.tintColor = WakeyUIKitStyle.primary
+        cell.contentConfiguration = configuration
+        cell.accessoryType = selectedSongId == song.id ? .checkmark : .none
+        cell.tintColor = WakeyUIKitStyle.primary
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let song = songs[indexPath.row]
+        selectedSongId = song.id
+        onSelect(song)
+        if let url = song.originalAudioURL {
+            preview(url)
+        }
+        tableView.reloadData()
+    }
+
+    private func preview(_ soundURL: URL) {
+        previewPlayer?.stop()
+        previewPlayer = try? AVAudioPlayer(contentsOf: soundURL)
+        previewPlayer?.volume = volume
+        previewPlayer?.prepareToPlay()
+        previewPlayer?.play()
+    }
+
+    @objc private func volumeChanged(_ sender: UISlider) {
+        volume = sender.value
+        updateVolumeLabel()
+        onVolumeChange(volume)
+        previewPlayer?.volume = volume
+    }
+
+    @objc private func volumeTapped(_ sender: UITapGestureRecognizer) {
+        guard let slider = sender.view as? UISlider else { return }
+        let location = sender.location(in: slider)
+        let ratio = min(max(location.x / slider.bounds.width, 0), 1)
+        slider.value = Float(ratio) * (slider.maximumValue - slider.minimumValue) + slider.minimumValue
+        volumeChanged(slider)
+    }
+
+    private func updateVolumeLabel() {
+        volumeValueLabel.text = "\(Int(round(volume * 100)))%"
+    }
+}
+
 final class GeneratingUIKitViewController: WakeyBaseViewController {
     private let draft: AlarmDraft
     private let statusLabel = UILabel()
     private let spinner = UIActivityIndicatorView(style: .large)
+    private let debugLabel = UILabel()
     private let viewModel = GeneratingViewModel()
+    private var cancellables = Set<AnyCancellable>()
+    private var debugTimer: Timer?
 
     init(draft: AlarmDraft) {
         self.draft = draft
@@ -1429,6 +2758,13 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
         statusLabel.font = .systemFont(ofSize: 26, weight: .semibold)
         statusLabel.textAlignment = .center
         statusLabel.numberOfLines = 0
+        debugLabel.font = .monospacedSystemFont(ofSize: 12, weight: .medium)
+        debugLabel.textColor = WakeyUIKitStyle.subtext
+        debugLabel.numberOfLines = 0
+        debugLabel.backgroundColor = UIColor.black.withAlphaComponent(0.04)
+        debugLabel.layer.cornerRadius = 14
+        debugLabel.clipsToBounds = true
+        debugLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         let icon = UIImageView(image: UIImage(systemName: "music.note"))
         icon.tintColor = WakeyUIKitStyle.primary
         icon.contentMode = .center
@@ -1441,157 +2777,541 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
 
         let detail = label("당신만을 위한 특별한 노래를 생성하고 있어요", size: 16, color: WakeyUIKitStyle.subtext, lines: 0)
         detail.textAlignment = .center
-        let cardStack = UIStackView(arrangedSubviews: [
-            chipRow([
-                WakeyChipLabel(text: draft.mood.rawValue, color: WakeyUIKitStyle.accent),
-                WakeyChipLabel(text: draft.purpose.rawValue, color: WakeyUIKitStyle.secondary)
-            ]),
-            label("\"\(draft.memo)\"", size: 14, color: WakeyUIKitStyle.subtext, lines: 2)
-        ])
-        cardStack.axis = .vertical
-        cardStack.spacing = 14
-
         stack.addArrangedSubview(icon)
         stack.addArrangedSubview(statusLabel)
         stack.addArrangedSubview(detail)
-        let contextCard = card(cardStack, padding: 24)
-        stack.addArrangedSubview(contextCard)
-        contextCard.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
         statusLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
         detail.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
 
         stack.addArrangedSubview(spinner)
+        stack.addArrangedSubview(debugLabel)
+        debugLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
+
+        bindDebugState()
+        updateDebugLabel()
+        debugTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.updateDebugLabel()
+        }
 
         Task {
-            let alarm = await viewModel.generate(
+            async let generatedAlarm = viewModel.generate(
                 draft: draft,
                 weatherService: context.weatherService,
                 locationService: context.locationService,
                 calendarService: context.calendarService,
                 notificationService: context.notificationManager
             )
-            context.alarmManager.add(alarm)
-            statusLabel.text = "알람이 저장되었습니다."
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            navigationController?.setViewControllers([HomeUIKitViewController(), AlarmDetailUIKitViewController(alarm: alarm)], animated: true)
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            var alarm = await generatedAlarm
+            do {
+                try await context.notificationManager.schedule(alarm)
+            } catch {
+                alarm.isEnabled = false
+            }
+            context.alarmManager.upsert(alarm)
+            statusLabel.text = "알람송이 준비되었습니다."
+            
+            if let navController = navigationController {
+                var vcs = navController.viewControllers
+                vcs.removeAll { $0 is CreateAlarmUIKitViewController || $0 is GeneratingUIKitViewController }
+                vcs.append(AlarmDetailUIKitViewController(alarm: alarm, savesAlarmOnDone: true))
+                navController.setViewControllers(vcs, animated: true)
+            }
         }
+    }
+
+    private func bindDebugState() {
+        Publishers.CombineLatest3(viewModel.$phase, viewModel.$debugStep, viewModel.$startedAt)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _, _, _ in
+                self?.updateDebugLabel()
+            }
+            .store(in: &cancellables)
+
+        viewModel.$statusDetail
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateDebugLabel()
+            }
+            .store(in: &cancellables)
+
+        viewModel.$lyrics
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateDebugLabel()
+            }
+            .store(in: &cancellables)
+
+        viewModel.$sunoDebugInfo
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateDebugLabel()
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateDebugLabel() {
+        let elapsed = elapsedText(since: viewModel.startedAt, now: Date())
+        let phaseText = phaseLabel(viewModel.phase)
+        let lyricsText = "\(viewModel.lyrics?.count ?? 0) chars"
+        let statusText = viewModel.statusDetail ?? "-"
+        debugLabel.text = """
+        DEBUG
+        phase: \(phaseText)
+        step: \(viewModel.debugStep)
+        elapsed: \(elapsed)
+        lyrics: \(lyricsText)
+        status: \(statusText)
+        suno:
+        \(viewModel.sunoDebugInfo)
+        """
+    }
+
+    private func phaseLabel(_ phase: GeneratingViewModel.Phase) -> String {
+        switch phase {
+        case .idle: return "idle"
+        case .gatheringContext: return "gatheringContext"
+        case .generatingLyrics: return "generatingLyrics"
+        case .requestingMusic: return "requestingMusic"
+        case .pollingMusic: return "pollingMusic"
+        case .downloadingAudio: return "downloadingAudio"
+        case .creatingNotificationAudio: return "creatingNotificationAudio"
+        case .scheduling: return "scheduling"
+        case .completed: return "completed"
+        case .failed(let message): return "failed(\(message))"
+        }
+    }
+
+    private func elapsedText(since startedAt: Date?, now: Date) -> String {
+        guard let startedAt else { return "-" }
+        let seconds = max(0, Int(now.timeIntervalSince(startedAt)))
+        let minutes = seconds / 60
+        let remaining = seconds % 60
+        return String(format: "%02d:%02d", minutes, remaining)
     }
 }
 
-final class AlarmDetailUIKitViewController: WakeyBaseViewController {
+final class AlarmDetailUIKitViewController: WakeyBaseViewController, UIScrollViewDelegate {
     private var alarm: AlarmSong
+    private let savesAlarmOnDone: Bool
     private let player = AudioPlayerService()
+    private let audioFileService = AudioFileService()
+    private let playButton = UIButton(type: .system)
+    private let volumeSlider = UISlider()
+    private let volumeValueLabel = UILabel()
+    private let artworkView = UIView()
+    private let artworkIcon = UIImageView(image: UIImage(systemName: "music.note"))
+    private let artworkLyricsScrollView = UIScrollView()
+    private let artworkLyricsLabel = UILabel()
+    private let progressSlider = UISlider()
+    private let elapsedTimeLabel = UILabel()
+    private let durationTimeLabel = UILabel()
+    private var playbackTimer: Timer?
+    private var isShowingArtworkLyrics = false
+    private weak var detailScrollView: UIScrollView?
+    private weak var volumeContainerView: UIView?
+    private weak var doneButtonView: UIView?
 
-    init(alarm: AlarmSong) {
+    init(alarm: AlarmSong, savesAlarmOnDone: Bool = false) {
         self.alarm = alarm
+        self.savesAlarmOnDone = savesAlarmOnDone
         super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
     }
 
     required init?(coder: NSCoder) {
         alarm = AlarmSong(time: Date(), purpose: .wakeup, mood: .exciting, nickname: WakeyProfile.nickname, memo: "")
+        savesAlarmOnDone = false
         super.init(coder: coder)
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "알람송"
+        title = savesAlarmOnDone ? "알람송 결과" : "알람송"
+        player.volume = alarm.resolvedAlarmVolume
         render()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        playbackTimer?.invalidate()
+        playbackTimer = nil
+        player.pause()
+    }
+
     private func render() {
-        let (_, stack) = makeScrollStack()
-        let time = label(alarm.time.alarmTimeText, size: 54, weight: .medium)
-        time.textAlignment = .center
-        stack.addArrangedSubview(time)
-        stack.addArrangedSubview(chipRow([
-            WakeyChipLabel(text: alarm.purpose.rawValue, color: WakeyUIKitStyle.secondary),
-            WakeyChipLabel(text: alarm.mood.rawValue, color: WakeyUIKitStyle.accent)
-        ]))
+        let (scrollView, stack) = makeScrollStack()
+        detailScrollView = scrollView
+        scrollView.delegate = self
+        stack.spacing = 18
+        stack.alignment = .center
 
-        let memoStack = UIStackView()
-        memoStack.axis = .vertical
-        memoStack.spacing = 10
-        memoStack.addArrangedSubview(label("메모", size: 14, weight: .medium, color: WakeyUIKitStyle.subtext))
-        memoStack.addArrangedSubview(label("\"\(alarm.memo.isEmpty ? "메모가 없어요" : alarm.memo)\"", size: 17, lines: 0))
-        stack.addArrangedSubview(card(memoStack, padding: 24))
+        let playerHero = UIStackView()
+        playerHero.axis = .vertical
+        playerHero.spacing = 24
+        playerHero.alignment = .center
+        playerHero.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 44)).isActive = true
+        playerHero.heightAnchor.constraint(greaterThanOrEqualToConstant: detailHeroHeight()).isActive = true
 
-        let lyricsStack = UIStackView()
-        lyricsStack.axis = .vertical
-        lyricsStack.spacing = 18
-        lyricsStack.addArrangedSubview(label("가사 미리보기", size: 14, weight: .medium, color: WakeyUIKitStyle.subtext))
-        let lyrics = label(alarm.lyrics ?? AlarmManager.sampleLyrics, size: 18, lines: 0)
-        lyrics.textAlignment = .center
-        lyricsStack.addArrangedSubview(lyrics)
-        stack.addArrangedSubview(softGradientCard(lyricsStack, padding: 24))
+        playerHero.addArrangedSubview(artworkSection())
 
-        let infoText = "날씨: \(alarm.weatherSummary ?? "반영 안 함")\n위치: \(alarm.locationSummary ?? "반영 안 함")\n일정: \(alarm.calendarSummary ?? "반영 안 함")"
-        stack.addArrangedSubview(card(label(infoText, size: 15, color: WakeyUIKitStyle.subtext, lines: 0)))
+        let titleStack = UIStackView()
+        titleStack.axis = .vertical
+        titleStack.alignment = .center
+        titleStack.spacing = 8
+        let songTitle = label(songTitleText, size: 28, weight: .semibold, lines: 2)
+        songTitle.textAlignment = .center
+        let songSubtitle = label("Wakey & Suno", size: 17, weight: .medium, color: WakeyUIKitStyle.subtext)
+        songSubtitle.textAlignment = .center
+        titleStack.addArrangedSubview(songTitle)
+        titleStack.addArrangedSubview(songSubtitle)
+        titleStack.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 56)).isActive = true
+        playerHero.addArrangedSubview(titleStack)
 
-        let play = WakeyUIKitStyle.plainButton(title: "전체 노래 듣기")
-        play.addTarget(self, action: #selector(playAudio), for: .touchUpInside)
-        stack.addArrangedSubview(play)
+        let spacer = UIView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        playerHero.addArrangedSubview(spacer)
 
-        let row = UIStackView()
-        row.axis = .horizontal
-        row.spacing = 10
-        let regenerate = WakeyUIKitStyle.plainButton(title: "다시 생성")
-        regenerate.addTarget(self, action: #selector(regenerateSong), for: .touchUpInside)
-        let delete = WakeyUIKitStyle.plainButton(title: "삭제", color: WakeyUIKitStyle.destructive)
-        delete.addTarget(self, action: #selector(deleteAlarm), for: .touchUpInside)
-        row.addArrangedSubview(regenerate)
-        row.addArrangedSubview(delete)
-        stack.addArrangedSubview(row)
+        playerHero.addArrangedSubview(playbackSection())
+        stack.addArrangedSubview(playerHero)
+        let volume = volumeControl()
+        volume.alpha = 0
+        volume.isUserInteractionEnabled = false
+        volumeContainerView = volume
+        stack.addArrangedSubview(volume)
 
-        let done = WakeyUIKitStyle.gradientButton(title: "완료", image: UIImage(systemName: "checkmark"))
+        let done = WakeyUIKitStyle.gradientButton(title: "완료")
         done.addTarget(self, action: #selector(doneTapped), for: .touchUpInside)
+        done.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 44)).isActive = true
+        done.alpha = 0
+        done.isUserInteractionEnabled = false
+        doneButtonView = done
         stack.addArrangedSubview(done)
     }
 
-    @objc private func playAudio() {
+    private func detailContentWidth(inset: CGFloat) -> CGFloat {
+        max(240, min(UIScreen.main.bounds.width - inset, 420))
+    }
+
+    private func detailHeroHeight() -> CGFloat {
+        max(620, UIScreen.main.bounds.height - 190)
+    }
+
+    private var songTitleText: String {
+        let title = alarm.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return title.isEmpty ? "Wakey Alarm Song" : title
+    }
+
+    private func artworkSection() -> UIView {
+        artworkView.translatesAutoresizingMaskIntoConstraints = false
+        artworkView.backgroundColor = WakeyUIKitStyle.primary
+        artworkView.layer.cornerRadius = 32
+        artworkView.clipsToBounds = false
+        artworkView.layer.shadowColor = WakeyUIKitStyle.primary.cgColor
+        artworkView.layer.shadowOpacity = 0.45
+        artworkView.layer.shadowRadius = 26
+        artworkView.layer.shadowOffset = CGSize(width: 0, height: 12)
+
+        let inner = UIView()
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        inner.backgroundColor = WakeyUIKitStyle.primary
+        inner.layer.cornerRadius = 32
+        inner.clipsToBounds = true
+        artworkView.addSubview(inner)
+
+        artworkIcon.tintColor = .white
+        artworkIcon.contentMode = .center
+        artworkIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 78, weight: .semibold)
+        artworkIcon.translatesAutoresizingMaskIntoConstraints = false
+        inner.addSubview(artworkIcon)
+
+        artworkLyricsScrollView.translatesAutoresizingMaskIntoConstraints = false
+        artworkLyricsScrollView.alpha = 0
+        artworkLyricsScrollView.backgroundColor = UIColor.black.withAlphaComponent(0.18)
+        artworkLyricsScrollView.clipsToBounds = true
+        inner.addSubview(artworkLyricsScrollView)
+
+        artworkLyricsLabel.translatesAutoresizingMaskIntoConstraints = false
+        artworkLyricsLabel.text = spaciousLyricsText(alarm.lyrics ?? AlarmManager.sampleLyrics)
+        artworkLyricsLabel.textColor = .white
+        artworkLyricsLabel.font = .systemFont(ofSize: 19, weight: .semibold)
+        artworkLyricsLabel.numberOfLines = 0
+        artworkLyricsLabel.textAlignment = .center
+        artworkLyricsScrollView.addSubview(artworkLyricsLabel)
+
+        NSLayoutConstraint.activate([
+            artworkView.widthAnchor.constraint(equalToConstant: max(240, min(UIScreen.main.bounds.width * 0.76, 340))),
+            artworkView.heightAnchor.constraint(equalTo: artworkView.widthAnchor),
+            inner.topAnchor.constraint(equalTo: artworkView.topAnchor),
+            inner.leadingAnchor.constraint(equalTo: artworkView.leadingAnchor),
+            inner.trailingAnchor.constraint(equalTo: artworkView.trailingAnchor),
+            inner.bottomAnchor.constraint(equalTo: artworkView.bottomAnchor),
+            artworkIcon.centerXAnchor.constraint(equalTo: inner.centerXAnchor),
+            artworkIcon.centerYAnchor.constraint(equalTo: inner.centerYAnchor),
+            artworkIcon.widthAnchor.constraint(equalToConstant: 120),
+            artworkIcon.heightAnchor.constraint(equalToConstant: 120),
+            artworkLyricsScrollView.topAnchor.constraint(equalTo: inner.topAnchor),
+            artworkLyricsScrollView.leadingAnchor.constraint(equalTo: inner.leadingAnchor),
+            artworkLyricsScrollView.trailingAnchor.constraint(equalTo: inner.trailingAnchor),
+            artworkLyricsScrollView.bottomAnchor.constraint(equalTo: inner.bottomAnchor),
+            artworkLyricsLabel.topAnchor.constraint(equalTo: artworkLyricsScrollView.contentLayoutGuide.topAnchor, constant: 24),
+            artworkLyricsLabel.leadingAnchor.constraint(equalTo: artworkLyricsScrollView.contentLayoutGuide.leadingAnchor, constant: 22),
+            artworkLyricsLabel.trailingAnchor.constraint(equalTo: artworkLyricsScrollView.contentLayoutGuide.trailingAnchor, constant: -22),
+            artworkLyricsLabel.bottomAnchor.constraint(equalTo: artworkLyricsScrollView.contentLayoutGuide.bottomAnchor, constant: -24),
+            artworkLyricsLabel.widthAnchor.constraint(equalTo: artworkLyricsScrollView.frameLayoutGuide.widthAnchor, constant: -44)
+        ])
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(toggleArtworkLyrics))
+        tap.cancelsTouchesInView = false
+        artworkView.addGestureRecognizer(tap)
+        return artworkView
+    }
+
+    private func spaciousLyricsText(_ lyrics: String) -> String {
+        lyrics
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "\n", with: "\n\n")
+    }
+
+    private func playbackSection() -> UIView {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 28
+        stack.alignment = .center
+        stack.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 44)).isActive = true
+
+        progressSlider.minimumValue = 0
+        progressSlider.maximumValue = 1
+        progressSlider.value = 0
+        progressSlider.minimumTrackTintColor = WakeyUIKitStyle.primary
+        progressSlider.maximumTrackTintColor = WakeyUIKitStyle.primary.withAlphaComponent(0.18)
+        progressSlider.thumbTintColor = WakeyUIKitStyle.primary
+        progressSlider.isUserInteractionEnabled = false
+
+        elapsedTimeLabel.text = "0:00"
+        elapsedTimeLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        elapsedTimeLabel.textColor = WakeyUIKitStyle.text
+        durationTimeLabel.text = "--:--"
+        durationTimeLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        durationTimeLabel.textColor = WakeyUIKitStyle.text
+
+        let timeRow = UIStackView(arrangedSubviews: [elapsedTimeLabel, UIView(), durationTimeLabel])
+        timeRow.axis = .horizontal
+        timeRow.alignment = .center
+        timeRow.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 58)).isActive = true
+
+        let progressStack = UIStackView(arrangedSubviews: [timeRow, progressSlider])
+        progressStack.axis = .vertical
+        progressStack.spacing = 8
+        progressStack.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 58)).isActive = true
+        stack.addArrangedSubview(progressStack)
+
+        playButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        playButton.tintColor = .white
+        playButton.backgroundColor = WakeyUIKitStyle.primary
+        playButton.layer.cornerRadius = 40
+        playButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 27, weight: .bold), forImageIn: .normal)
+        playButton.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        playButton.heightAnchor.constraint(equalToConstant: 80).isActive = true
+        playButton.addTarget(self, action: #selector(togglePlayback), for: .touchUpInside)
+        stack.addArrangedSubview(playButton)
+        return stack
+    }
+
+    private func volumeControl() -> UIView {
+        volumeSlider.minimumValue = 0
+        volumeSlider.maximumValue = 1
+        volumeSlider.value = player.volume
+        volumeSlider.minimumTrackTintColor = WakeyUIKitStyle.primary
+        volumeSlider.maximumTrackTintColor = UIColor.black.withAlphaComponent(0.10)
+        volumeSlider.addTarget(self, action: #selector(volumeChanged(_:)), for: .valueChanged)
+        volumeSlider.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(volumeTapped(_:))))
+
+        volumeValueLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        volumeValueLabel.textColor = WakeyUIKitStyle.subtext
+        updateVolumeLabel()
+
+        let header = UIStackView(arrangedSubviews: [
+            label("알람 음량", size: 14, weight: .medium, color: WakeyUIKitStyle.subtext),
+            UIView(),
+            volumeValueLabel
+        ])
+        header.axis = .horizontal
+        header.alignment = .center
+
+        let stack = UIStackView(arrangedSubviews: [header, volumeSlider])
+        stack.axis = .vertical
+        stack.spacing = 8
+        let container = card(stack, padding: 20)
+        container.widthAnchor.constraint(equalToConstant: detailContentWidth(inset: 44)).isActive = true
+        return container
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard scrollView === detailScrollView else { return }
+        let alpha = max(0, min(1, (scrollView.contentOffset.y - 24) / 88))
+        volumeContainerView?.alpha = alpha
+        doneButtonView?.alpha = alpha
+
+        let isInteractive = alpha > 0.35
+        volumeContainerView?.isUserInteractionEnabled = isInteractive
+        doneButtonView?.isUserInteractionEnabled = isInteractive
+    }
+
+    @objc private func toggleArtworkLyrics() {
+        isShowingArtworkLyrics.toggle()
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+            self.artworkLyricsScrollView.alpha = self.isShowingArtworkLyrics ? 1 : 0
+            self.artworkIcon.alpha = self.isShowingArtworkLyrics ? 0.12 : 1
+            self.artworkView.transform = self.isShowingArtworkLyrics
+                ? CGAffineTransform(scaleX: 0.985, y: 0.985)
+                : .identity
+        }
+    }
+
+    @objc private func togglePlayback() {
         player.toggle(url: alarm.originalAudioURL)
         if let message = player.message {
             showMessage(message)
         }
+        playButton.setImage(UIImage(systemName: player.isPlaying ? "pause.fill" : "play.fill"), for: .normal)
+        if player.isPlaying {
+            startPlaybackTimer()
+        } else {
+            playbackTimer?.invalidate()
+            playbackTimer = nil
+        }
+        updatePlaybackProgress()
     }
 
-    @objc private func regenerateSong() {
-        context.notificationManager.cancel(alarm)
-        context.alarmManager.delete(alarm)
-        let draft = AlarmDraft(
-            time: alarm.time,
-            selectedDate: alarm.repeatDays.isEmpty ? alarm.date : nil,
-            alarmName: alarm.alarmName ?? "",
-            nickname: alarm.nickname,
-            includeNameInLyrics: !alarm.nickname.isEmpty,
-            useCustomSong: alarm.lyrics != nil || alarm.originalAudioURL != nil,
-            snoozeEnabled: alarm.snoozeEnabled ?? true,
-            snoozeIntervalMinutes: alarm.snoozeIntervalMinutes ?? 5,
-            snoozeRepeatCount: alarm.snoozeRepeatCount ?? 3,
-            purpose: alarm.purpose,
-            mood: alarm.mood,
-            memo: alarm.memo,
-            repeatDays: alarm.repeatDays,
-            useLocation: alarm.locationSummary != nil,
-            useWeather: alarm.weatherSummary != nil,
-            useCalendar: alarm.calendarSummary != nil
-        )
-        navigationController?.pushViewController(GeneratingUIKitViewController(draft: draft), animated: true)
+    private func startPlaybackTimer() {
+        playbackTimer?.invalidate()
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updatePlaybackProgress()
+            }
+        }
     }
 
-    @objc private func deleteAlarm() {
-        context.notificationManager.cancel(alarm)
-        context.alarmManager.delete(alarm)
-        navigationController?.popToRootViewController(animated: true)
+    private func updatePlaybackProgress() {
+        let duration = player.duration
+        let currentTime = player.currentTime
+        elapsedTimeLabel.text = timeText(currentTime)
+        durationTimeLabel.text = duration > 0 ? timeText(duration) : "--:--"
+        progressSlider.value = duration > 0 ? Float(currentTime / duration) : 0
+
+        if duration > 0, currentTime >= duration {
+            playbackTimer?.invalidate()
+            playbackTimer = nil
+            player.pause()
+            playButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        }
+    }
+
+    private func timeText(_ seconds: TimeInterval) -> String {
+        let totalSeconds = max(0, Int(seconds.rounded()))
+        return "\(totalSeconds / 60):\(String(format: "%02d", totalSeconds % 60))"
+    }
+
+    @objc private func volumeChanged(_ sender: UISlider) {
+        player.volume = sender.value
+        updateVolumeLabel()
+    }
+
+    @objc private func volumeTapped(_ sender: UITapGestureRecognizer) {
+        guard let slider = sender.view as? UISlider else { return }
+        let location = sender.location(in: slider)
+        let ratio = min(max(location.x / slider.bounds.width, 0), 1)
+        slider.value = Float(ratio) * (slider.maximumValue - slider.minimumValue) + slider.minimumValue
+        volumeChanged(slider)
+    }
+
+    private func updateVolumeLabel() {
+        volumeValueLabel.text = "\(Int(round(player.volume * 100)))%"
     }
 
     @objc private func doneTapped() {
-        navigationController?.popToRootViewController(animated: true)
+        guard savesAlarmOnDone else {
+            navigationController?.popViewController(animated: true)
+            return
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            var scheduledAlarm = alarm
+            scheduledAlarm.alarmVolume = player.volume
+            if let originalAudioURL = scheduledAlarm.originalAudioURL,
+               let notificationAudioURL = try? await audioFileService.createShortNotificationAudio(
+                from: originalAudioURL,
+                alarmId: scheduledAlarm.id,
+                volume: player.volume
+               ) {
+                scheduledAlarm.notificationAudioFilePath = notificationAudioURL.lastPathComponent
+            }
+            do {
+                try await context.notificationManager.schedule(scheduledAlarm)
+            } catch {
+                scheduledAlarm.isEnabled = false
+            }
+            context.alarmManager.upsert(scheduledAlarm)
+            navigationController?.popToRootViewController(animated: true)
+        }
+    }
+
+    private func defaultAlarmCountdownText(for alarm: AlarmSong) -> String {
+        guard let fireDate = nextFireDate(for: alarm) else {
+            return "알람이 저장되었습니다."
+        }
+
+        let seconds = max(60, Int(fireDate.timeIntervalSince(Date())))
+        let days = seconds / 86_400
+        let hours = (seconds % 86_400) / 3_600
+        let minutes = (seconds % 3_600) / 60
+        let dayText = days > 0 ? "\(days)일 " : ""
+        return "\(dayText)\(hours)시간 \(minutes)분 뒤에 알람이 울립니다"
+    }
+
+    private func nextFireDate(for alarm: AlarmSong) -> Date? {
+        let calendar = Calendar.current
+        let time = calendar.dateComponents([.hour, .minute], from: alarm.time)
+        let now = Date()
+
+        if alarm.repeatDays.isEmpty {
+            let base = calendar.startOfDay(for: alarm.date)
+            let date = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: base) ?? alarm.date
+            return date > now ? date : calendar.date(byAdding: .day, value: 1, to: date)
+        }
+
+        return (0..<14).compactMap { offset -> Date? in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: now) else { return nil }
+            guard alarm.repeatDays.contains(weekday(for: day)) else { return nil }
+            let candidate = calendar.date(bySettingHour: time.hour ?? 7, minute: time.minute ?? 0, second: 0, of: day)
+            guard let candidate, candidate > now else { return nil }
+            return candidate
+        }.min()
+    }
+
+    private func weekday(for date: Date) -> Weekday {
+        switch Calendar.current.component(.weekday, from: date) {
+        case 1: return .sunday
+        case 2: return .monday
+        case 3: return .tuesday
+        case 4: return .wednesday
+        case 5: return .thursday
+        case 6: return .friday
+        default: return .saturday
+        }
     }
 }
 
-final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate {
-    private let tableView = UITableView(frame: .zero, style: .insetGrouped)
+final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
+    private let tableView = UITableView(frame: .zero, style: .plain)
     private let player = AudioPlayerService()
+    private let deleteRevealWidth: CGFloat = 80
+    private let libraryCardTag = 3701
+    private let deleteButtonTag = 3702
+    private var ignoresNextTapClose = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -1599,10 +3319,16 @@ final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewData
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = WakeyUIKitStyle.background
         tableView.separatorStyle = .none
-        tableView.rowHeight = 132
+        tableView.rowHeight = 88
+        tableView.sectionHeaderHeight = 10
+        tableView.sectionFooterHeight = 10
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "libraryCell")
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(closeRevealedLibraryCardsFromTap(_:)))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.delegate = self
+        tableView.addGestureRecognizer(tapGesture)
         view.addSubview(tableView)
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -1618,34 +3344,25 @@ final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewData
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        max(context.alarmManager.generatedSongs.count, 1)
+        let count = context.alarmManager.generatedSongs.count
+        if count == 0 {
+            let emptyLabel = UILabel()
+            emptyLabel.text = "AI 알람송이 없어요"
+            emptyLabel.textColor = WakeyUIKitStyle.subtext
+            emptyLabel.font = .systemFont(ofSize: 16, weight: .medium)
+            emptyLabel.textAlignment = .center
+            tableView.backgroundView = emptyLabel
+        } else {
+            tableView.backgroundView = nil
+        }
+        return count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "libraryCell", for: indexPath)
         let songs = context.alarmManager.generatedSongs
-        guard !songs.isEmpty else {
-            configureCardCell(cell, title: "알람송이 없어요", subtitle: "새 알람송을 만들어보세요", accessory: nil)
-            return cell
-        }
-
         let song = songs[indexPath.row]
-        let play = UIButton(type: .system)
-        play.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        play.tintColor = .white
-        play.backgroundColor = WakeyUIKitStyle.primary.withAlphaComponent(0.88)
-        play.layer.cornerRadius = 24
-        play.frame = CGRect(x: 0, y: 0, width: 48, height: 48)
-        play.widthAnchor.constraint(equalToConstant: 48).isActive = true
-        play.heightAnchor.constraint(equalToConstant: 48).isActive = true
-        play.tag = indexPath.row
-        play.addTarget(self, action: #selector(playSong(_:)), for: .touchUpInside)
-        configureCardCell(
-            cell,
-            title: "\(song.time.alarmTimeText)  \(song.purpose.rawValue)",
-            subtitle: "\(song.mood.rawValue) · \((song.generatedAt ?? song.createdAt).koreanMonthDayText)",
-            accessory: play
-        )
+        configureLibrarySongCell(cell, song: song, index: indexPath.row)
         return cell
     }
 
@@ -1653,7 +3370,27 @@ final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewData
         tableView.deselectRow(at: indexPath, animated: true)
         let songs = context.alarmManager.generatedSongs
         guard songs.indices.contains(indexPath.row) else { return }
+        guard !ignoresNextTapClose else { return }
+        if let card = tableView.cellForRow(at: indexPath)?.contentView.viewWithTag(libraryCardTag),
+           abs(card.transform.tx) > 1 {
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+                card.transform = .identity
+                self.deleteButton(for: card)?.alpha = 0
+            }
+            return
+        }
         navigationController?.pushViewController(AlarmDetailUIKitViewController(alarm: songs[indexPath.row]), animated: true)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var view = touch.view
+        while let currentView = view {
+            if currentView is UIButton {
+                return false
+            }
+            view = currentView.superview
+        }
+        return true
     }
 
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
@@ -1661,18 +3398,191 @@ final class LibraryUIKitViewController: WakeyBaseViewController, UITableViewData
         let songs = context.alarmManager.generatedSongs
         guard songs.indices.contains(indexPath.row) else { return }
         let song = songs[indexPath.row]
-        context.notificationManager.cancel(song)
-        context.alarmManager.delete(song)
+        context.alarmManager.deleteGeneratedSong(song)
         tableView.reloadData()
     }
 
-    @objc private func playSong(_ sender: UIButton) {
+    private func configureLibrarySongCell(_ cell: UITableViewCell, song: AlarmSong, index: Int) {
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.backgroundColor = .clear
+        cell.contentView.backgroundColor = .clear
+        cell.contentConfiguration = nil
+        cell.accessoryView = nil
+        cell.selectionStyle = .none
+        cell.clipsToBounds = false
+        cell.contentView.clipsToBounds = false
+        cell.contentView.alpha = 1
+        cell.contentView.transform = .identity
+
+        let deleteButton = UIButton(type: .system)
+        deleteButton.tag = deleteButtonTag
+        deleteButton.accessibilityIdentifier = "\(index)"
+        deleteButton.backgroundColor = WakeyUIKitStyle.destructive
+        deleteButton.tintColor = .white
+        deleteButton.alpha = 0
+        deleteButton.setImage(UIImage(systemName: "trash.fill"), for: .normal)
+        deleteButton.layer.cornerRadius = 20
+        deleteButton.clipsToBounds = true
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteButton.addTarget(self, action: #selector(deleteLibrarySongFromButton(_:)), for: .touchUpInside)
+        cell.contentView.addSubview(deleteButton)
+
+        let card = WakeyUIKitStyle.cardView()
+        card.tag = libraryCardTag
+        card.translatesAutoresizingMaskIntoConstraints = false
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handleLibraryCardPan(_:)))
+        pan.cancelsTouchesInView = false
+        card.addGestureRecognizer(pan)
+        cell.contentView.addSubview(card)
+
+        let album = UIView()
+        album.backgroundColor = WakeyUIKitStyle.primary
+        album.layer.cornerRadius = 12
+        album.clipsToBounds = true
+        album.translatesAutoresizingMaskIntoConstraints = false
+        album.widthAnchor.constraint(equalToConstant: 54).isActive = true
+        album.heightAnchor.constraint(equalToConstant: 54).isActive = true
+
+        let note = UIImageView(image: UIImage(systemName: "music.note"))
+        note.tintColor = .white
+        note.contentMode = .center
+        note.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
+        note.translatesAutoresizingMaskIntoConstraints = false
+        album.addSubview(note)
+        NSLayoutConstraint.activate([
+            note.centerXAnchor.constraint(equalTo: album.centerXAnchor),
+            note.centerYAnchor.constraint(equalTo: album.centerYAnchor)
+        ])
+
+        let title = song.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let titleLabel = label(title?.isEmpty == false ? title! : "Wakey Alarm Song", size: 17, weight: .semibold, lines: 1)
+        let subtitleLabel = label("\(song.purpose.rawValue) · \(song.mood.rawValue) · \((song.generatedAt ?? song.createdAt).koreanMonthDayText)", size: 13, color: WakeyUIKitStyle.subtext, lines: 1)
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 4
+
+        let row = UIStackView(arrangedSubviews: [album, textStack, UIView()])
+        row.axis = .horizontal
+        row.spacing = 12
+        row.alignment = .center
+        row.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(row)
+
+        NSLayoutConstraint.activate([
+            deleteButton.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
+            deleteButton.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -22),
+            deleteButton.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8),
+            deleteButton.widthAnchor.constraint(equalToConstant: deleteRevealWidth),
+            card.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 6),
+            card.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 22),
+            card.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -22),
+            card.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -6),
+            row.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
+            row.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            row.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+            row.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -10)
+        ])
+    }
+
+    @objc private func deleteLibrarySongFromButton(_ sender: UIButton) {
         let songs = context.alarmManager.generatedSongs
-        guard songs.indices.contains(sender.tag) else { return }
-        player.toggle(url: songs[sender.tag].originalAudioURL)
-        if let message = player.message {
-            showMessage(message)
+        guard let indexText = sender.accessibilityIdentifier,
+              let index = Int(indexText),
+              songs.indices.contains(index) else {
+            tableView.reloadData()
+            return
         }
+        let song = songs[index]
+        let indexPath = IndexPath(row: index, section: 0)
+        let deleteRows = { [weak self] in
+            guard let self else { return }
+            self.context.alarmManager.deleteGeneratedSong(song)
+            let remainingCount = self.context.alarmManager.generatedSongs.count
+            if remainingCount == 0 {
+                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) { [weak self] in
+                    self?.tableView.reloadData()
+                }
+            } else {
+                self.tableView.performBatchUpdates {
+                    self.tableView.deleteRows(at: [indexPath], with: .fade)
+                } completion: { [weak self] _ in
+                    self?.tableView.reloadData()
+                }
+            }
+        }
+
+        guard let cell = tableView.cellForRow(at: indexPath) else {
+            deleteRows()
+            return
+        }
+
+        UIView.animate(withDuration: 0.16, delay: 0, options: [.curveEaseOut]) {
+            cell.contentView.alpha = 0
+            cell.contentView.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
+        } completion: { _ in
+            deleteRows()
+        }
+    }
+
+    @objc private func handleLibraryCardPan(_ gesture: UIPanGestureRecognizer) {
+        guard let card = gesture.view else { return }
+
+        switch gesture.state {
+        case .began:
+            closeRevealedLibraryCards(excluding: card)
+            card.layer.setValue(card.transform.tx, forKey: "swipeStartX")
+        case .changed:
+            let startX = (card.layer.value(forKey: "swipeStartX") as? NSNumber)?.doubleValue ?? 0
+            let translation = gesture.translation(in: card.superview).x
+            let targetX = min(0, max(-deleteRevealWidth, CGFloat(startX) + translation))
+            card.transform = CGAffineTransform(translationX: targetX, y: 0)
+            updateDeleteButtonAlpha(for: card)
+        case .ended, .cancelled, .failed:
+            let velocityX = gesture.velocity(in: card.superview).x
+            let shouldReveal = card.transform.tx < -8 || velocityX < -120
+            ignoresNextTapClose = true
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut]) {
+                card.transform = shouldReveal ? CGAffineTransform(translationX: -self.deleteRevealWidth, y: 0) : .identity
+                self.deleteButton(for: card)?.alpha = shouldReveal ? 1 : 0
+            } completion: { _ in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.ignoresNextTapClose = false
+                }
+            }
+        default:
+            break
+        }
+    }
+
+    @objc private func closeRevealedLibraryCardsFromTap(_ gesture: UITapGestureRecognizer) {
+        guard !ignoresNextTapClose else { return }
+        let point = gesture.location(in: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point),
+           let cell = tableView.cellForRow(at: indexPath),
+           let card = cell.contentView.viewWithTag(libraryCardTag),
+           abs(card.transform.tx) <= 1 {
+            return
+        }
+        closeRevealedLibraryCards()
+    }
+
+    private func closeRevealedLibraryCards(excluding excludedCard: UIView? = nil) {
+        for cell in tableView.visibleCells {
+            guard let card = cell.contentView.viewWithTag(libraryCardTag), card !== excludedCard, abs(card.transform.tx) > 1 else { continue }
+            UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseOut]) {
+                card.transform = .identity
+                self.deleteButton(for: card)?.alpha = 0
+            }
+        }
+    }
+
+    private func updateDeleteButtonAlpha(for card: UIView) {
+        deleteButton(for: card)?.alpha = min(1, max(0, abs(card.transform.tx) / deleteRevealWidth))
+    }
+
+    private func deleteButton(for card: UIView) -> UIButton? {
+        card.superview?.viewWithTag(deleteButtonTag) as? UIButton
     }
 }
 
@@ -1772,24 +3682,12 @@ final class SettingsUIKitViewController: WakeyBaseViewController {
         let row = UIControl()
         row.addTarget(self, action: action, for: .touchUpInside)
 
-        let iconContainer = UIView()
-        iconContainer.backgroundColor = iconColor.withAlphaComponent(0.11)
-        iconContainer.layer.cornerRadius = 23
-        iconContainer.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.widthAnchor.constraint(equalToConstant: 46).isActive = true
-        iconContainer.heightAnchor.constraint(equalToConstant: 46).isActive = true
-
         let icon = UIImageView(image: UIImage(systemName: iconName))
-        icon.tintColor = iconColor
+        icon.tintColor = WakeyUIKitStyle.primary
         icon.contentMode = .scaleAspectFit
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.addSubview(icon)
-        NSLayoutConstraint.activate([
-            icon.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-            icon.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 22),
-            icon.heightAnchor.constraint(equalToConstant: 22)
-        ])
+        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 28, weight: .medium)
+        icon.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 44).isActive = true
 
         let titleLabel = label(title, size: 16, weight: .semibold)
         subtitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
@@ -1804,7 +3702,7 @@ final class SettingsUIKitViewController: WakeyBaseViewController {
         chevron.contentMode = .scaleAspectFit
         chevron.widthAnchor.constraint(equalToConstant: 18).isActive = true
 
-        let rowStack = UIStackView(arrangedSubviews: [iconContainer, textStack, UIView(), chevron])
+        let rowStack = UIStackView(arrangedSubviews: [icon, textStack, UIView(), chevron])
         rowStack.axis = .horizontal
         rowStack.alignment = .center
         rowStack.spacing = 14

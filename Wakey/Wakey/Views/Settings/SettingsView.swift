@@ -201,9 +201,9 @@ private struct SettingsIcon: View {
 
     var body: some View {
         Image(systemName: systemName)
-            .font(.system(size: 18, weight: .semibold))
+            .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(color)
-            .frame(width: 38, height: 38)
+            .frame(width: 36, height: 36)
             .background(color.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }

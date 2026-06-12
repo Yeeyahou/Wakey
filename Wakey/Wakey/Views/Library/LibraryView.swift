@@ -41,7 +41,7 @@ struct LibraryView: View {
                             )
                             .swipeActions {
                                 Button(role: .destructive) {
-                                    alarmManager.delete(song)
+                                    alarmManager.deleteGeneratedSong(song)
                                 } label: {
                                     Label("삭제", systemImage: "trash")
                                 }

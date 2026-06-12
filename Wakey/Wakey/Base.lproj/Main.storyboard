@@ -72,7 +72,7 @@
                                                 <constraints>
                                                     <constraint firstAttribute="height" constant="56" id="home-create-h"/>
                                                 </constraints>
-                                                <state key="normal" title="+ 나만의 알람송 만들기">
+                                                <state key="normal" title="나만의 알람 만들기">
                                                     <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                 </state>
                                             </button>

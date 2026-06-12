@@ -49,14 +49,12 @@ struct RootView: View {
                     route = .tabs
                 }, onDelete: {
                     notificationManager.cancel(alarm)
-                    alarmManager.delete(alarm)
+                    alarmManager.deleteAlarm(alarm)
                     route = .tabs
                 }, onUpdate: { updated in
                     alarmManager.update(updated)
                     route = .detail(updated)
                 }, onRegenerate: { draft in
-                    notificationManager.cancel(alarm)
-                    alarmManager.delete(alarm)
                     route = .generating(draft)
                 })
             }

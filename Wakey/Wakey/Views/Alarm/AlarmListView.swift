@@ -49,7 +49,7 @@ struct AlarmListView: View {
             Button("삭제", role: .destructive) {
                 if let alarmToDelete {
                     notificationManager.cancel(alarmToDelete)
-                    alarmManager.delete(alarmToDelete)
+                    alarmManager.deleteAlarm(alarmToDelete)
                 }
                 alarmToDelete = nil
             }
@@ -80,7 +80,7 @@ struct AlarmListView: View {
                 Text("전체 알람")
                     .font(.system(size: 14))
                     .foregroundStyle(WakeyColors.textSecondary)
-                Text("\(alarmManager.alarms.count)개")
+                Text("\(alarmManager.sortedAlarms.count)개")
                     .font(.system(size: 28, weight: .semibold))
             }
         }
@@ -149,7 +149,18 @@ private struct AlarmCard: View {
                 .tint(WakeyColors.primary)
         }
         .padding(20)
-        .wakeyCard(cornerRadius: 24)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(
+                    alarm.isAIAlarmSong
+                        ? WakeyColors.primary.opacity(0.18)
+                        : Color.black.opacity(0.05),
+                    lineWidth: alarm.isAIAlarmSong ? 1.5 : 1
+                )
+        )
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
         .opacity(alarm.isEnabled ? 1 : 0.60)
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -163,6 +174,23 @@ private struct AlarmCard: View {
         Group {
             WakeyChip(text: alarm.purpose.rawValue, color: WakeyColors.secondary)
             WakeyChip(text: alarm.mood.rawValue, color: WakeyColors.primary)
+        }
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if alarm.isAIAlarmSong {
+            LinearGradient(
+                colors: [
+                    Color(hex: "FFF8E8"),
+                    Color(hex: "FFEAF2"),
+                    Color(hex: "EEF7FF")
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            WakeyColors.cardBackground
         }
     }
 }

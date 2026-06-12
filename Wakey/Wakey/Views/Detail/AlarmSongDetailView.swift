@@ -46,8 +46,10 @@ struct AlarmSongDetailView: View {
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
-            Text("알람송")
+            Text(alarmTitle)
                 .font(.system(size: 22, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Spacer()
         }
         .padding(.horizontal, 18)
@@ -58,6 +60,10 @@ struct AlarmSongDetailView: View {
 
     private var timeHeader: some View {
         VStack(spacing: 12) {
+            Text(alarmTitle)
+                .font(.system(size: 25, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(alarm.time.alarmTimeText)
                 .font(.system(size: 54, weight: .medium))
                 .lineLimit(1)
@@ -67,6 +73,11 @@ struct AlarmSongDetailView: View {
                 WakeyChip(text: alarm.mood.rawValue, color: WakeyColors.accent)
             }
         }
+    }
+
+    private var alarmTitle: String {
+        let title = alarm.alarmName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return title.isEmpty ? "Wakey Alarm Song" : title
     }
 
     private func infoCard(title: String, value: String) -> some View {
