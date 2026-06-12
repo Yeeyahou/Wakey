@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		82EE1CB02FD2A00100C00BE8 /* AlarmSoundsOriginals in Resources */ = {isa = PBXBuildFile; fileRef = 82EE1CAF2FD2A00100C00BE8 /* AlarmSoundsOriginals */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		82A808782FD98C6A00E4E478 /* location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = location.gpx; path = ../location.gpx; sourceTree = "<group>"; };
+		82A808792FD98C8D00E4E478 /* location.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = location.gpx; path = ../location.gpx; sourceTree = "<group>"; };
 		82EE1C962FD2774700C00BE8 /* Wakey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wakey.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		82EE1CAF2FD2A00100C00BE8 /* AlarmSoundsOriginals */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AlarmSoundsOriginals; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -45,7 +52,10 @@
 		82EE1C8D2FD2774700C00BE8 = {
 			isa = PBXGroup;
 			children = (
+				82A808782FD98C6A00E4E478 /* location.gpx */,
+				82A808792FD98C8D00E4E478 /* location.gpx */,
 				82EE1C982FD2774700C00BE8 /* Wakey */,
+				82EE1CAF2FD2A00100C00BE8 /* AlarmSoundsOriginals */,
 				82EE1C972FD2774700C00BE8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -122,6 +132,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82EE1CB02FD2A00100C00BE8 /* AlarmSoundsOriginals in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,10 +154,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Wakey/Wakey.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Wakey/Info.plist;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "오늘 일정을 알람송 가사에 반영하기 위해 캘린더 접근 권한이 필요합니다.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "오늘 일정을 알람송 가사에 반영하기 위해 캘린더 권한이 필요합니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "알람송에 현재 위치 정보를 반영하기 위해 위치 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -172,10 +187,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Wakey/Wakey.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Wakey/Info.plist;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "오늘 일정을 알람송 가사에 반영하기 위해 캘린더 접근 권한이 필요합니다.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "오늘 일정을 알람송 가사에 반영하기 위해 캘린더 권한이 필요합니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "알람송에 현재 위치 정보를 반영하기 위해 위치 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
