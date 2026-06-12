@@ -474,21 +474,30 @@ final class WakeyTabBarController: UITabBarController {
 
 @MainActor
 enum WakeyNotificationRouter {
-    static func openAlarm(from userInfo: [AnyHashable: Any]) {
+    static func openAlarm(from userInfo: [AnyHashable: Any], retryCount: Int = 0) {
         guard let alarmIdString = userInfo["alarmId"] as? String,
               let alarmId = UUID(uuidString: alarmIdString),
               let alarm = WakeyAppContext.shared.alarmManager.alarms.first(where: { $0.id == alarmId }) else {
             return
         }
 
-        if let tabBar = WakeyTabBarController.activeInstance {
+        if let tabBar = WakeyTabBarController.activeInstance ?? activeTabBarController() {
             tabBar.showRingingAlarm(alarm)
             return
         }
 
+        guard retryCount < 10 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            WakeyTabBarController.activeInstance?.showRingingAlarm(alarm)
+            openAlarm(from: userInfo, retryCount: retryCount + 1)
         }
+    }
+
+    private static func activeTabBarController() -> WakeyTabBarController? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: { $0.isKeyWindow })?
+            .rootViewController as? WakeyTabBarController
     }
 }
 
@@ -607,8 +616,6 @@ final class RingingAlarmUIKitViewController: UIViewController {
         lyricsBox.translatesAutoresizingMaskIntoConstraints = false
         lyricsBox.layer.cornerRadius = 24
         lyricsBox.backgroundColor = UIColor.black.withAlphaComponent(0.20)
-        lyricsBox.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-        lyricsBox.heightAnchor.constraint(equalToConstant: 220).isActive = true
 
         let lyricsLabel = UILabel()
         lyricsLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -626,6 +633,10 @@ final class RingingAlarmUIKitViewController: UIViewController {
             lyricsLabel.widthAnchor.constraint(equalTo: lyricsBox.frameLayoutGuide.widthAnchor, constant: -44)
         ])
         content.addArrangedSubview(lyricsBox)
+        NSLayoutConstraint.activate([
+            lyricsBox.widthAnchor.constraint(equalTo: content.widthAnchor),
+            lyricsBox.heightAnchor.constraint(equalToConstant: 220)
+        ])
 
         let spacer = UIView()
         spacer.setContentHuggingPriority(.defaultLow, for: .vertical)
@@ -638,9 +649,9 @@ final class RingingAlarmUIKitViewController: UIViewController {
         snoozeButton.backgroundColor = WakeyUIKitStyle.primary
         snoozeButton.layer.cornerRadius = 34
         snoozeButton.heightAnchor.constraint(equalToConstant: 68).isActive = true
-        snoozeButton.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         snoozeButton.addTarget(self, action: #selector(snoozeTapped), for: .touchUpInside)
         content.addArrangedSubview(snoozeButton)
+        snoozeButton.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
         content.addArrangedSubview(slideToStopControl())
 
