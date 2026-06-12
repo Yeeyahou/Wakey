@@ -52,8 +52,11 @@ final class NotificationService: ObservableObject {
         cancel(alarm)
 
         let content = UNMutableNotificationContent()
-        content.title = "Wakey"
-        content.body = "맞춤 알람송이 도착했어요."
+        content.title = alarm.alarmName ?? "Wakey"
+        content.body = "알람을 끄려면 열어주세요."
+        content.userInfo = [
+            "alarmId": alarm.id.uuidString
+        ]
         if let fileName = alarm.notificationSoundFileName {
             content.sound = UNNotificationSound(named: UNNotificationSoundName(fileName))
         } else {

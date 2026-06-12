@@ -18,6 +18,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = WakeyTabBarController()
         window.makeKeyAndVisible()
         self.window = window
+
+        if let response = connectionOptions.notificationResponse {
+            DispatchQueue.main.async {
+                WakeyNotificationRouter.openAlarm(from: response.notification.request.content.userInfo)
+            }
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

@@ -13,11 +13,13 @@ final class AlarmManager: ObservableObject {
     }
 
     var sortedAlarms: [AlarmSong] {
-        alarms.sorted { $0.time.alarmTimeText < $1.time.alarmTimeText }
+        alarms
+            .filter(\.isVisibleAlarm)
+            .sorted { $0.time.alarmTimeText < $1.time.alarmTimeText }
     }
 
     var enabledAlarms: [AlarmSong] {
-        alarms.filter(\.isEnabled)
+        alarms.filter { $0.isVisibleAlarm && $0.isEnabled }
     }
 
     var nextAlarm: AlarmSong? {
@@ -26,7 +28,7 @@ final class AlarmManager: ObservableObject {
 
     var recentGenerated: AlarmSong? {
         alarms
-            .filter { $0.lyrics != nil }
+            .filter(\.isVisibleLibrarySong)
             .sorted { ($0.generatedAt ?? .distantPast) > ($1.generatedAt ?? .distantPast) }
             .first
     }
@@ -63,6 +65,33 @@ final class AlarmManager: ObservableObject {
         alarms.removeAll { $0.id == alarm.id }
     }
 
+    func deleteAlarm(_ alarm: AlarmSong) {
+        guard let index = alarms.firstIndex(where: { $0.id == alarm.id }) else { return }
+        if alarms[index].isAIAlarmSong {
+            alarms[index].isEnabled = false
+            alarms[index].isAlarmDeleted = true
+            removeIfFullyHidden(at: index)
+        } else {
+            alarms.remove(at: index)
+        }
+    }
+
+    func deleteGeneratedSong(_ song: AlarmSong) {
+        guard let index = alarms.firstIndex(where: { $0.id == song.id }) else { return }
+        if alarms[index].isVisibleAlarm {
+            alarms[index].isLibraryDeleted = true
+        } else {
+            alarms.remove(at: index)
+        }
+    }
+
+    private func removeIfFullyHidden(at index: Int) {
+        guard alarms.indices.contains(index) else { return }
+        if alarms[index].isAlarmDeleted == true && alarms[index].isLibraryDeleted == true {
+            alarms.remove(at: index)
+        }
+    }
+
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
         alarms = (try? JSONDecoder().decode([AlarmSong].self, from: data)) ?? []
@@ -87,7 +116,7 @@ final class AlarmManager: ObservableObject {
 
     var generatedSongs: [AlarmSong] {
         alarms
-            .filter { $0.lyrics != nil || $0.originalAudioFilePath != nil }
+            .filter(\.isVisibleLibrarySong)
             .sorted { ($0.generatedAt ?? $0.createdAt) > ($1.generatedAt ?? $1.createdAt) }
     }
 }

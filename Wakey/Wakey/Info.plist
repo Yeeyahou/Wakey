@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UILaunchScreen</key>
-	<dict/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -21,11 +19,7 @@
 			</array>
 		</dict>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>알람송에 현재 위치 정보를 반영하기 위해 위치 권한이 필요합니다.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>오늘 일정을 알람송 가사에 반영하기 위해 캘린더 권한이 필요합니다.</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>오늘 일정을 알람송 가사에 반영하기 위해 캘린더 접근 권한이 필요합니다.</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>

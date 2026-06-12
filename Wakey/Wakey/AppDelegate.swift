@@ -25,6 +25,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         [.banner, .sound, .badge]
     }
 
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        await MainActor.run {
+            WakeyNotificationRouter.openAlarm(from: response.notification.request.content.userInfo)
+        }
+    }
+
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {

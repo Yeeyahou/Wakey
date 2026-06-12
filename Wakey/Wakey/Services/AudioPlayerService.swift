@@ -7,6 +7,19 @@ final class AudioPlayerService: ObservableObject {
     @Published var message: String?
 
     private var player: AVAudioPlayer?
+    var currentTime: TimeInterval {
+        player?.currentTime ?? 0
+    }
+
+    var duration: TimeInterval {
+        player?.duration ?? 0
+    }
+
+    var volume: Float = 0.8 {
+        didSet {
+            player?.volume = volume
+        }
+    }
 
     func play(url: URL?) {
         guard let url else {
@@ -19,6 +32,7 @@ final class AudioPlayerService: ObservableObject {
                 player?.play()
             } else {
                 player = try AVAudioPlayer(contentsOf: url)
+                player?.volume = volume
                 player?.prepareToPlay()
                 player?.play()
             }
