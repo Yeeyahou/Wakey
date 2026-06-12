@@ -17,10 +17,14 @@ struct AlarmSong: Identifiable, Codable, Equatable {
     var lyrics: String?
     var originalAudioFilePath: String?
     var notificationAudioFilePath: String?
+    var alarmVolume: Float?
+    var usesAIAlarmSong: Bool?
     var generatedAt: Date?
     var weatherSummary: String?
     var locationSummary: String?
     var calendarSummary: String?
+    var isAlarmDeleted: Bool?
+    var isLibraryDeleted: Bool?
     var createdAt: Date
 
     init(
@@ -40,10 +44,14 @@ struct AlarmSong: Identifiable, Codable, Equatable {
         lyrics: String? = nil,
         originalAudioFilePath: String? = nil,
         notificationAudioFilePath: String? = nil,
+        alarmVolume: Float? = nil,
+        usesAIAlarmSong: Bool? = nil,
         generatedAt: Date? = nil,
         weatherSummary: String? = nil,
         locationSummary: String? = nil,
         calendarSummary: String? = nil,
+        isAlarmDeleted: Bool? = nil,
+        isLibraryDeleted: Bool? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -62,23 +70,25 @@ struct AlarmSong: Identifiable, Codable, Equatable {
         self.lyrics = lyrics
         self.originalAudioFilePath = originalAudioFilePath
         self.notificationAudioFilePath = notificationAudioFilePath
+        self.alarmVolume = alarmVolume
+        self.usesAIAlarmSong = usesAIAlarmSong
         self.generatedAt = generatedAt
         self.weatherSummary = weatherSummary
         self.locationSummary = locationSummary
         self.calendarSummary = calendarSummary
+        self.isAlarmDeleted = isAlarmDeleted
+        self.isLibraryDeleted = isLibraryDeleted
         self.createdAt = createdAt
     }
 }
 
 extension AlarmSong {
     var originalAudioURL: URL? {
-        guard let originalAudioFilePath else { return nil }
-        return URL(fileURLWithPath: originalAudioFilePath)
+        Self.resolveStoredAudioPath(originalAudioFilePath, directory: .documentDirectory)
     }
 
     var notificationAudioURL: URL? {
-        guard let notificationAudioFilePath else { return nil }
-        return URL(fileURLWithPath: notificationAudioFilePath)
+        Self.resolveStoredAudioPath(notificationAudioFilePath, directory: .librarySounds)
     }
 
     var notificationSoundFileName: String? {
@@ -87,7 +97,7 @@ extension AlarmSong {
 
     var audioURL: URL? {
         get { originalAudioURL }
-        set { originalAudioFilePath = newValue?.path }
+        set { originalAudioFilePath = newValue?.lastPathComponent }
     }
 
     var weather: String? {
@@ -104,17 +114,87 @@ extension AlarmSong {
         get { calendarSummary }
         set { calendarSummary = newValue }
     }
+
+    var isAIAlarmSong: Bool {
+        usesAIAlarmSong == true || lyrics != nil || originalAudioFilePath != nil
+    }
+
+    var isVisibleAlarm: Bool {
+        isAlarmDeleted != true
+    }
+
+    var isVisibleLibrarySong: Bool {
+        isAIAlarmSong && isLibraryDeleted != true
+    }
+
+    var resolvedAlarmVolume: Float {
+        min(max(alarmVolume ?? 0.8, 0), 1)
+    }
+
+    private enum AudioStorageDirectory {
+        case documentDirectory
+        case librarySounds
+    }
+
+    private static func resolveStoredAudioPath(_ storedPath: String?, directory: AudioStorageDirectory) -> URL? {
+        guard let storedPath, !storedPath.isEmpty else { return nil }
+
+        let storedURL = URL(fileURLWithPath: storedPath)
+        if storedURL.isFileURL, storedPath.hasPrefix("/"), FileManager.default.fileExists(atPath: storedURL.path) {
+            return storedURL
+        }
+
+        let fileName = storedURL.lastPathComponent
+        guard !fileName.isEmpty else { return nil }
+
+        let baseURL: URL?
+        switch directory {
+        case .documentDirectory:
+            baseURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        case .librarySounds:
+            baseURL = try? AudioFileService.librarySoundsDirectory()
+        }
+
+        guard let resolvedURL = baseURL?.appendingPathComponent(fileName) else { return nil }
+        return FileManager.default.fileExists(atPath: resolvedURL.path) ? resolvedURL : nil
+    }
 }
 
 enum AlarmPurpose: String, Codable, CaseIterable, Identifiable {
     case wakeup = "기상"
-    case school = "등교"
     case work = "출근"
-    case exam = "시험"
+    case school = "등교"
     case exercise = "운동"
     case study = "공부"
+    case other = "기타"
 
     var id: String { rawValue }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        switch value {
+        case "기상":
+            self = .wakeup
+        case "출근":
+            self = .work
+        case "등교":
+            self = .school
+        case "운동":
+            self = .exercise
+        case "공부":
+            self = .study
+        case "기타", "시험":
+            self = .other
+        default:
+            self = .other
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 enum AlarmMood: String, Codable, CaseIterable, Identifiable {
@@ -168,6 +248,7 @@ struct AlarmDraft: Equatable {
     var includeNameInLyrics = true
     var useCustomSong = true
     var defaultAlarmSoundFileName: String?
+    var defaultAlarmVolume: Float = 0.8
     var snoozeEnabled = true
     var snoozeIntervalMinutes = 5
     var snoozeRepeatCount: Int? = 3
@@ -176,6 +257,6 @@ struct AlarmDraft: Equatable {
     var memo = ""
     var repeatDays: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
     var useLocation = false
-    var useWeather = true
+    var useWeather = false
     var useCalendar = false
 }

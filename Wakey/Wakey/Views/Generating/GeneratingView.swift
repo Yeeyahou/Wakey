@@ -12,7 +12,7 @@ struct GeneratingView: View {
     @StateObject private var viewModel = GeneratingViewModel()
 
     var body: some View {
-        VStack(spacing: 34) {
+        VStack(spacing: 28) {
             Spacer()
             ZStack {
                 ForEach(0..<6, id: \.self) { index in
@@ -45,30 +45,11 @@ struct GeneratingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            VStack(spacing: 14) {
-                HStack {
-                    WakeyChip(text: draft.mood.rawValue, color: WakeyColors.accent)
-                    WakeyChip(text: draft.purpose.rawValue, color: WakeyColors.secondary)
-                }
-                Text("\"\(draft.memo)\"")
-                    .font(.system(size: 14))
-                    .foregroundStyle(WakeyColors.textSecondary)
-                    .lineLimit(2)
-                if let statusDetail = viewModel.statusDetail {
-                    Text(statusDetail)
-                        .font(.system(size: 13))
-                        .foregroundStyle(WakeyColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(24)
-            .wakeyCard(cornerRadius: 24)
-            .padding(.horizontal, 28)
-
             ProgressView()
                 .tint(WakeyColors.primary)
                 .padding(.horizontal, 42)
+
+            debugPanel
             Spacer()
         }
         .wakeyScreenBackground()
@@ -84,5 +65,56 @@ struct GeneratingView: View {
             try? await Task.sleep(nanoseconds: 700_000_000)
             onComplete(alarm)
         }
+    }
+
+    private var debugPanel: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            let elapsed = elapsedText(since: viewModel.startedAt, now: timeline.date)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("DEBUG")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundStyle(WakeyColors.textSecondary)
+                Text("phase: \(phaseLabel(viewModel.phase))")
+                Text("step: \(viewModel.debugStep)")
+                Text("elapsed: \(elapsed)")
+                Text("lyrics: \(viewModel.lyrics?.count ?? 0) chars")
+                Text("status: \(viewModel.statusDetail ?? "-")")
+                Text("suno:\n\(viewModel.sunoDebugInfo)")
+            }
+            .font(.system(size: 13, weight: .medium, design: .monospaced))
+            .foregroundStyle(WakeyColors.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(WakeyColors.cardBackground.opacity(0.75))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 28)
+        }
+    }
+
+    private func phaseLabel(_ phase: GeneratingViewModel.Phase) -> String {
+        switch phase {
+        case .idle: return "idle"
+        case .gatheringContext: return "gatheringContext"
+        case .generatingLyrics: return "generatingLyrics"
+        case .requestingMusic: return "requestingMusic"
+        case .pollingMusic: return "pollingMusic"
+        case .downloadingAudio: return "downloadingAudio"
+        case .creatingNotificationAudio: return "creatingNotificationAudio"
+        case .scheduling: return "scheduling"
+        case .completed: return "completed"
+        case .failed(let message): return "failed(\(message))"
+        }
+    }
+
+    private func elapsedText(since startedAt: Date?, now: Date) -> String {
+        guard let startedAt else { return "-" }
+        let seconds = max(0, Int(now.timeIntervalSince(startedAt)))
+        let minutes = seconds / 60
+        let remaining = seconds % 60
+        return String(format: "%02d:%02d", minutes, remaining)
     }
 }

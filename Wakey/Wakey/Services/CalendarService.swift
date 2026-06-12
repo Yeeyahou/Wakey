@@ -19,14 +19,14 @@ final class CalendarService: ObservableObject {
         }
     }
 
-    func todaySummary() async -> String? {
+    func summary(for targetDate: Date) async -> String? {
         guard await requestAccessIfNeeded() else {
             await MainActor.run { lastMessage = "캘린더 권한이 없어 일정 정보는 제외했어요." }
             return nil
         }
 
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: Date())
+        let start = calendar.startOfDay(for: targetDate)
         guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return nil }
         let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
         let titles = store.events(matching: predicate)

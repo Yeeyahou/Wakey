@@ -8,6 +8,7 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
 
     private let manager = CLLocationManager()
     private var locationContinuation: CheckedContinuation<CLLocation?, Never>?
+    private var locationRequestTimeoutTask: Task<Void, Never>?
 
     override init() {
         authorizationStatus = manager.authorizationStatus
@@ -61,10 +62,24 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     private func requestSingleLocation() async -> CLLocation? {
-        await withCheckedContinuation { continuation in
+        locationRequestTimeoutTask?.cancel()
+        return await withCheckedContinuation { continuation in
             locationContinuation = continuation
             manager.requestLocation()
+            locationRequestTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                await MainActor.run {
+                    self?.finishLocationRequest(nil)
+                }
+            }
         }
+    }
+
+    private func finishLocationRequest(_ location: CLLocation?) {
+        locationRequestTimeoutTask?.cancel()
+        locationRequestTimeoutTask = nil
+        locationContinuation?.resume(returning: location)
+        locationContinuation = nil
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -72,13 +87,11 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        locationContinuation?.resume(returning: locations.last)
-        locationContinuation = nil
+        finishLocationRequest(locations.last)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        locationContinuation?.resume(returning: nil)
-        locationContinuation = nil
+        finishLocationRequest(nil)
     }
 }
 

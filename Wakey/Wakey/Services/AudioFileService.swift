@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 
 struct AudioFileService {
-    static let supportedAlarmSoundExtensions = ["wav", "caf", "aiff", "aif"]
+    nonisolated static let supportedAlarmSoundExtensions = ["wav", "caf", "aiff", "aif"]
 
     static func bundledAlarmSoundURLs() -> [URL] {
         let nestedURLs = supportedAlarmSoundExtensions.flatMap { fileExtension in
@@ -13,6 +13,40 @@ struct AudioFileService {
         }
         let urls = nestedURLs.isEmpty ? rootURLs : nestedURLs
         return urls.sorted { $0.deletingPathExtension().lastPathComponent.localizedStandardCompare($1.deletingPathExtension().lastPathComponent) == .orderedAscending }
+    }
+
+    nonisolated static func bundledOriginalAlarmSongURLs() -> [URL] {
+        let bundledURLs = supportedAlarmSoundExtensions.flatMap { fileExtension in
+            Bundle.main.urls(forResourcesWithExtension: fileExtension, subdirectory: "AlarmSoundsOriginals") ?? []
+        }
+
+        let developmentDirectory = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("AlarmSoundsOriginals", isDirectory: true)
+        let developmentURLs = (try? FileManager.default.contentsOfDirectory(
+            at: developmentDirectory,
+            includingPropertiesForKeys: nil
+        ))?.filter { supportedAlarmSoundExtensions.contains($0.pathExtension.lowercased()) } ?? []
+
+        let urls = bundledURLs.isEmpty ? developmentURLs : bundledURLs
+        return urls.sorted { $0.deletingPathExtension().lastPathComponent.localizedStandardCompare($1.deletingPathExtension().lastPathComponent) == .orderedAscending }
+    }
+
+    func copyFirstOriginalAlarmSongToDocuments(alarmId: UUID) async throws -> URL {
+        try await Task.detached(priority: .userInitiated) {
+            guard let source = Self.bundledOriginalAlarmSongURLs().first else {
+                throw AudioError.soundNotFound
+            }
+
+            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let destination = documents.appendingPathComponent("alarm_original_\(alarmId.uuidString).\(source.pathExtension)")
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: source, to: destination)
+            return destination
+        }.value
     }
 
     func copyBundledAlarmSoundToLibrary(fileName: String) async throws -> URL {
@@ -32,7 +66,7 @@ struct AudioFileService {
         }.value
     }
 
-    func createShortNotificationAudio(from sourceURL: URL, alarmId: UUID) async throws -> URL {
+    func createShortNotificationAudio(from sourceURL: URL, alarmId: UUID, volume: Float = 0.8) async throws -> URL {
         try await Task.detached(priority: .userInitiated) {
             let soundsDirectory = try Self.librarySoundsDirectory()
             let destination = soundsDirectory.appendingPathComponent("alarm_\(alarmId.uuidString).caf")
@@ -63,10 +97,20 @@ struct AudioFileService {
             }
 
             var remaining = framesToRead
+            let gain = min(max(volume, 0), 1)
             while remaining > 0 {
                 let count = min(bufferFrameCapacity, AVAudioFrameCount(remaining))
                 try inputFile.read(into: buffer, frameCount: count)
                 if buffer.frameLength == 0 { break }
+                if gain < 0.999, let channels = buffer.floatChannelData {
+                    let frameLength = Int(buffer.frameLength)
+                    for channel in 0..<Int(format.channelCount) {
+                        let samples = channels[channel]
+                        for frame in 0..<frameLength {
+                            samples[frame] *= gain
+                        }
+                    }
+                }
                 try outputFile.write(from: buffer)
                 remaining -= AVAudioFramePosition(buffer.frameLength)
             }
