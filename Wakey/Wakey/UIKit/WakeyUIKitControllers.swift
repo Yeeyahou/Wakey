@@ -504,13 +504,71 @@ enum WakeyNotificationRouter {
 final class RingingAlarmUIKitViewController: UIViewController {
     private let alarm: AlarmSong
     private let player = AudioPlayerService()
-    private let gradientLayer = CAGradientLayer()
-    private let glowLayer = CAGradientLayer()
+    private let baseGradientLayer = CAGradientLayer()
+    private var meshLayers: [CAGradientLayer] = []
     private let slideTrack = UIView()
     private let slideThumb = UIView()
     private let slideLabel = UILabel()
     private var thumbLeadingConstraint: NSLayoutConstraint?
     private var didStop = false
+
+    private struct MeshBlobSpec {
+        let color: UIColor
+        let start: CGPoint
+        let end: CGPoint
+        let sizeRatio: CGFloat
+        let opacity: Float
+        let duration: CFTimeInterval
+        let delay: CFTimeInterval
+    }
+
+    private let meshBlobSpecs: [MeshBlobSpec] = [
+        MeshBlobSpec(
+            color: UIColor(red: 1.00, green: 0.47, blue: 0.20, alpha: 1),
+            start: CGPoint(x: -0.08, y: 0.22),
+            end: CGPoint(x: 0.42, y: 0.04),
+            sizeRatio: 1.18,
+            opacity: 0.86,
+            duration: 7.2,
+            delay: 0
+        ),
+        MeshBlobSpec(
+            color: UIColor(red: 1.00, green: 0.22, blue: 0.12, alpha: 1),
+            start: CGPoint(x: 0.82, y: 0.12),
+            end: CGPoint(x: 1.12, y: 0.62),
+            sizeRatio: 1.08,
+            opacity: 0.68,
+            duration: 8.6,
+            delay: 0.7
+        ),
+        MeshBlobSpec(
+            color: UIColor(red: 1.00, green: 0.66, blue: 0.25, alpha: 1),
+            start: CGPoint(x: 0.26, y: 0.96),
+            end: CGPoint(x: 0.78, y: 0.78),
+            sizeRatio: 1.26,
+            opacity: 0.58,
+            duration: 9.4,
+            delay: 1.1
+        ),
+        MeshBlobSpec(
+            color: UIColor(red: 0.72, green: 0.12, blue: 0.06, alpha: 1),
+            start: CGPoint(x: 1.08, y: 1.02),
+            end: CGPoint(x: 0.48, y: 0.55),
+            sizeRatio: 1.32,
+            opacity: 0.48,
+            duration: 10.2,
+            delay: 1.8
+        ),
+        MeshBlobSpec(
+            color: UIColor(red: 1.00, green: 0.36, blue: 0.16, alpha: 1),
+            start: CGPoint(x: 0.44, y: 0.42),
+            end: CGPoint(x: 0.12, y: 0.68),
+            sizeRatio: 0.92,
+            opacity: 0.46,
+            duration: 6.8,
+            delay: 0.3
+        )
+    ]
 
     init(alarm: AlarmSong) {
         self.alarm = alarm
@@ -533,8 +591,8 @@ final class RingingAlarmUIKitViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        gradientLayer.frame = view.bounds
-        glowLayer.frame = view.bounds
+        baseGradientLayer.frame = view.bounds
+        layoutMeshLayers()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -544,42 +602,87 @@ final class RingingAlarmUIKitViewController: UIViewController {
 
     private func setupBackground() {
         view.backgroundColor = .black
-        gradientLayer.colors = [
+        baseGradientLayer.colors = [
             UIColor.black.cgColor,
-            UIColor(red: 0.10, green: 0.04, blue: 0.02, alpha: 1).cgColor,
+            UIColor(red: 0.12, green: 0.04, blue: 0.02, alpha: 1).cgColor,
+            UIColor(red: 0.04, green: 0.01, blue: 0.00, alpha: 1).cgColor,
             UIColor.black.cgColor
         ]
-        gradientLayer.locations = [0, 0.55, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.2, y: 0.1)
-        gradientLayer.endPoint = CGPoint(x: 0.9, y: 0.9)
-        view.layer.addSublayer(gradientLayer)
+        baseGradientLayer.locations = [0, 0.42, 0.72, 1]
+        baseGradientLayer.startPoint = CGPoint(x: 0.16, y: 0.0)
+        baseGradientLayer.endPoint = CGPoint(x: 0.88, y: 1.0)
+        view.layer.addSublayer(baseGradientLayer)
 
-        glowLayer.colors = [
-            WakeyUIKitStyle.primary.withAlphaComponent(0.0).cgColor,
-            WakeyUIKitStyle.primary.withAlphaComponent(0.55).cgColor,
-            UIColor(red: 1, green: 0.28, blue: 0.16, alpha: 0.28).cgColor,
-            WakeyUIKitStyle.primary.withAlphaComponent(0.0).cgColor
-        ]
-        glowLayer.locations = [0, 0.36, 0.68, 1]
-        glowLayer.startPoint = CGPoint(x: 0.08, y: 0.2)
-        glowLayer.endPoint = CGPoint(x: 0.92, y: 0.86)
-        view.layer.addSublayer(glowLayer)
+        meshLayers = meshBlobSpecs.enumerated().map { index, spec in
+            let layer = CAGradientLayer()
+            layer.type = .radial
+            layer.colors = [
+                spec.color.withAlphaComponent(0.92).cgColor,
+                spec.color.withAlphaComponent(0.34).cgColor,
+                spec.color.withAlphaComponent(0.00).cgColor
+            ]
+            layer.locations = [0, 0.36, 1]
+            layer.startPoint = CGPoint(x: 0.5, y: 0.5)
+            layer.endPoint = CGPoint(x: 1, y: 1)
+            layer.opacity = spec.opacity
+            layer.compositingFilter = "screenBlendMode"
+            view.layer.addSublayer(layer)
+            animateMeshLayer(layer, spec: spec, index: index)
+            return layer
+        }
+    }
 
-        let animation = CABasicAnimation(keyPath: "startPoint")
-        animation.fromValue = CGPoint(x: 0.05, y: 0.2)
-        animation.toValue = CGPoint(x: 0.45, y: 0.05)
-        animation.duration = 3.4
-        animation.autoreverses = true
-        animation.repeatCount = .infinity
-        glowLayer.add(animation, forKey: "meshStart")
+    private func layoutMeshLayers() {
+        guard !view.bounds.isEmpty else { return }
+        let baseSize = max(view.bounds.width, view.bounds.height)
 
-        let endAnimation = CABasicAnimation(keyPath: "endPoint")
-        endAnimation.fromValue = CGPoint(x: 0.95, y: 0.85)
-        endAnimation.toValue = CGPoint(x: 0.58, y: 0.98)
-        endAnimation.duration = 4.2
-        endAnimation.autoreverses = true
-        endAnimation.repeatCount = .infinity
-        glowLayer.add(endAnimation, forKey: "meshEnd")
+        for (index, layer) in meshLayers.enumerated() {
+            let spec = meshBlobSpecs[index]
+            let size = baseSize * spec.sizeRatio
+            layer.bounds = CGRect(x: 0, y: 0, width: size, height: size)
+            if layer.animation(forKey: "meshMove") == nil {
+                layer.position = meshPoint(spec.start)
+                animateMeshLayer(layer, spec: spec, index: index)
+            }
+        }
+    }
+
+    private func meshPoint(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: view.bounds.width * point.x, y: view.bounds.height * point.y)
+    }
+
+    private func animateMeshLayer(_ layer: CAGradientLayer, spec: MeshBlobSpec, index: Int) {
+        guard !view.bounds.isEmpty else { return }
+
+        let move = CABasicAnimation(keyPath: "position")
+        move.fromValue = meshPoint(spec.start)
+        move.toValue = meshPoint(spec.end)
+        move.duration = spec.duration
+        move.beginTime = CACurrentMediaTime() + spec.delay
+        move.autoreverses = true
+        move.repeatCount = .infinity
+        move.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(move, forKey: "meshMove")
+
+        let scale = CABasicAnimation(keyPath: "transform.scale")
+        scale.fromValue = 0.86
+        scale.toValue = 1.18 + CGFloat(index % 2) * 0.08
+        scale.duration = spec.duration * 0.72
+        scale.beginTime = CACurrentMediaTime() + spec.delay * 0.5
+        scale.autoreverses = true
+        scale.repeatCount = .infinity
+        scale.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(scale, forKey: "meshScale")
+
+        let pulse = CABasicAnimation(keyPath: "opacity")
+        pulse.fromValue = max(0.22, spec.opacity - 0.22)
+        pulse.toValue = spec.opacity
+        pulse.duration = spec.duration * 0.58
+        pulse.beginTime = CACurrentMediaTime() + spec.delay * 0.3
+        pulse.autoreverses = true
+        pulse.repeatCount = .infinity
+        pulse.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(pulse, forKey: "meshPulse")
     }
 
     private func setupContent() {
@@ -596,7 +699,7 @@ final class RingingAlarmUIKitViewController: UIViewController {
         header.spacing = 12
 
         let titleLabel = UILabel()
-        titleLabel.text = alarm.alarmName ?? "Alarm"
+        titleLabel.text = "Wakey"
         titleLabel.font = .systemFont(ofSize: 22, weight: .semibold)
         titleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
         titleLabel.textAlignment = .center
@@ -614,12 +717,12 @@ final class RingingAlarmUIKitViewController: UIViewController {
 
         let lyricsBox = UIScrollView()
         lyricsBox.translatesAutoresizingMaskIntoConstraints = false
-        lyricsBox.layer.cornerRadius = 24
-        lyricsBox.backgroundColor = UIColor.black.withAlphaComponent(0.20)
+        lyricsBox.backgroundColor = .clear
+        lyricsBox.showsVerticalScrollIndicator = false
 
         let lyricsLabel = UILabel()
         lyricsLabel.translatesAutoresizingMaskIntoConstraints = false
-        lyricsLabel.text = alarm.isAIAlarmSong ? (alarm.lyrics ?? "") : ""
+        lyricsLabel.text = spaciousLyricsText(alarm.lyrics ?? "")
         lyricsLabel.font = .systemFont(ofSize: 21, weight: .semibold)
         lyricsLabel.textColor = UIColor.white.withAlphaComponent(0.88)
         lyricsLabel.textAlignment = .center
@@ -645,10 +748,10 @@ final class RingingAlarmUIKitViewController: UIViewController {
         let snoozeButton = UIButton(type: .system)
         snoozeButton.setTitle("다시 알림", for: .normal)
         snoozeButton.setTitleColor(.white, for: .normal)
-        snoozeButton.titleLabel?.font = .systemFont(ofSize: 20, weight: .semibold)
-        snoozeButton.backgroundColor = WakeyUIKitStyle.primary
-        snoozeButton.layer.cornerRadius = 34
-        snoozeButton.heightAnchor.constraint(equalToConstant: 68).isActive = true
+        snoozeButton.titleLabel?.font = .systemFont(ofSize: 21, weight: .bold)
+        snoozeButton.backgroundColor = UIColor(red: 1.00, green: 0.46, blue: 0.18, alpha: 1)
+        snoozeButton.layer.cornerRadius = 41
+        snoozeButton.heightAnchor.constraint(equalToConstant: 82).isActive = true
         snoozeButton.addTarget(self, action: #selector(snoozeTapped), for: .touchUpInside)
         content.addArrangedSubview(snoozeButton)
         snoozeButton.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
@@ -666,9 +769,9 @@ final class RingingAlarmUIKitViewController: UIViewController {
     private func slideToStopControl() -> UIView {
         slideTrack.translatesAutoresizingMaskIntoConstraints = false
         slideTrack.backgroundColor = UIColor.white.withAlphaComponent(0.10)
-        slideTrack.layer.cornerRadius = 34
+        slideTrack.layer.cornerRadius = 41
         slideTrack.clipsToBounds = true
-        slideTrack.heightAnchor.constraint(equalToConstant: 68).isActive = true
+        slideTrack.heightAnchor.constraint(equalToConstant: 82).isActive = true
 
         slideLabel.text = "밀어서 끄기"
         slideLabel.textColor = UIColor.white.withAlphaComponent(0.35)
@@ -676,7 +779,7 @@ final class RingingAlarmUIKitViewController: UIViewController {
         slideLabel.translatesAutoresizingMaskIntoConstraints = false
 
         slideThumb.backgroundColor = UIColor.white.withAlphaComponent(0.16)
-        slideThumb.layer.cornerRadius = 30
+        slideThumb.layer.cornerRadius = 37
         slideThumb.translatesAutoresizingMaskIntoConstraints = false
         let stopIcon = UIImageView(image: UIImage(systemName: "stop.fill"))
         stopIcon.tintColor = .white
@@ -694,7 +797,7 @@ final class RingingAlarmUIKitViewController: UIViewController {
             slideLabel.centerYAnchor.constraint(equalTo: slideTrack.centerYAnchor),
             slideThumb.topAnchor.constraint(equalTo: slideTrack.topAnchor, constant: 4),
             slideThumb.bottomAnchor.constraint(equalTo: slideTrack.bottomAnchor, constant: -4),
-            slideThumb.widthAnchor.constraint(equalToConstant: 60),
+            slideThumb.widthAnchor.constraint(equalToConstant: 74),
             stopIcon.centerXAnchor.constraint(equalTo: slideThumb.centerXAnchor),
             stopIcon.centerYAnchor.constraint(equalTo: slideThumb.centerYAnchor),
             stopIcon.widthAnchor.constraint(equalToConstant: 24),
@@ -703,6 +806,14 @@ final class RingingAlarmUIKitViewController: UIViewController {
 
         slideTrack.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleStopPan(_:))))
         return slideTrack
+    }
+
+    private func spaciousLyricsText(_ lyrics: String) -> String {
+        lyrics
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n\n")
     }
 
     @objc private func snoozeTapped() {
@@ -733,7 +844,7 @@ final class RingingAlarmUIKitViewController: UIViewController {
     }
 
     @objc private func handleStopPan(_ sender: UIPanGestureRecognizer) {
-        let maxOffset = max(0, slideTrack.bounds.width - 64)
+        let maxOffset = max(0, slideTrack.bounds.width - 78)
         let translation = sender.translation(in: slideTrack).x
         let offset = min(max(4, translation + 4), maxOffset)
         thumbLeadingConstraint?.constant = offset
@@ -2250,12 +2361,13 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
                 )
             }
 
+            let selectedLibrarySong = selectedDefaultLibrarySong
             var alarm = AlarmSong(
                 id: alarmId,
                 time: draft.time,
                 date: draft.selectedDate ?? Date(),
                 isEnabled: editingAlarm?.isEnabled ?? true,
-                alarmName: draft.alarmName.isEmpty ? nil : draft.alarmName,
+                alarmName: selectedLibrarySong?.alarmName ?? (draft.alarmName.isEmpty ? nil : draft.alarmName),
                 purpose: draft.purpose,
                 mood: draft.mood,
                 nickname: draft.nickname,
@@ -2264,9 +2376,12 @@ final class CreateAlarmUIKitViewController: WakeyBaseViewController {
                 snoozeEnabled: draft.snoozeEnabled,
                 snoozeIntervalMinutes: draft.snoozeIntervalMinutes,
                 snoozeRepeatCount: draft.snoozeRepeatCount,
+                lyrics: selectedLibrarySong?.lyrics,
+                originalAudioFilePath: selectedLibrarySong?.originalAudioFilePath,
                 notificationAudioFilePath: notificationAudioURL?.lastPathComponent,
                 alarmVolume: draft.defaultAlarmVolume,
-                usesAIAlarmSong: false,
+                usesAIAlarmSong: selectedLibrarySong != nil,
+                isLibraryDeleted: selectedLibrarySong != nil ? true : nil,
                 createdAt: editingAlarm?.createdAt ?? Date()
             )
 
@@ -2743,10 +2858,9 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
     private let draft: AlarmDraft
     private let statusLabel = UILabel()
     private let spinner = UIActivityIndicatorView(style: .large)
-    private let debugLabel = UILabel()
+    private let progressLabel = UILabel()
     private let viewModel = GeneratingViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var debugTimer: Timer?
 
     init(draft: AlarmDraft) {
         self.draft = draft
@@ -2769,13 +2883,11 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
         statusLabel.font = .systemFont(ofSize: 26, weight: .semibold)
         statusLabel.textAlignment = .center
         statusLabel.numberOfLines = 0
-        debugLabel.font = .monospacedSystemFont(ofSize: 12, weight: .medium)
-        debugLabel.textColor = WakeyUIKitStyle.subtext
-        debugLabel.numberOfLines = 0
-        debugLabel.backgroundColor = UIColor.black.withAlphaComponent(0.04)
-        debugLabel.layer.cornerRadius = 14
-        debugLabel.clipsToBounds = true
-        debugLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        progressLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        progressLabel.textColor = WakeyUIKitStyle.subtext
+        progressLabel.numberOfLines = 2
+        progressLabel.textAlignment = .center
+        progressLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         let icon = UIImageView(image: UIImage(systemName: "music.note"))
         icon.tintColor = WakeyUIKitStyle.primary
         icon.contentMode = .center
@@ -2794,15 +2906,15 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
         statusLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
         detail.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
 
+        let spacer = UIView()
+        stack.addArrangedSubview(spacer)
+        spacer.heightAnchor.constraint(greaterThanOrEqualTo: view.heightAnchor, multiplier: 0.20).isActive = true
         stack.addArrangedSubview(spinner)
-        stack.addArrangedSubview(debugLabel)
-        debugLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
+        stack.addArrangedSubview(progressLabel)
+        progressLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -56).isActive = true
 
-        bindDebugState()
-        updateDebugLabel()
-        debugTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.updateDebugLabel()
-        }
+        bindProgressState()
+        updateProgressLabel()
 
         Task {
             async let generatedAlarm = viewModel.generate(
@@ -2831,75 +2943,91 @@ final class GeneratingUIKitViewController: WakeyBaseViewController {
         }
     }
 
-    private func bindDebugState() {
+    private func bindProgressState() {
         Publishers.CombineLatest3(viewModel.$phase, viewModel.$debugStep, viewModel.$startedAt)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _, _, _ in
-                self?.updateDebugLabel()
+                self?.updateProgressLabel()
             }
             .store(in: &cancellables)
 
         viewModel.$statusDetail
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.updateDebugLabel()
+                self?.updateProgressLabel()
             }
             .store(in: &cancellables)
 
         viewModel.$lyrics
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.updateDebugLabel()
+                self?.updateProgressLabel()
             }
             .store(in: &cancellables)
 
         viewModel.$sunoDebugInfo
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.updateDebugLabel()
+                self?.updateProgressLabel()
             }
             .store(in: &cancellables)
     }
 
-    private func updateDebugLabel() {
-        let elapsed = elapsedText(since: viewModel.startedAt, now: Date())
-        let phaseText = phaseLabel(viewModel.phase)
-        let lyricsText = "\(viewModel.lyrics?.count ?? 0) chars"
-        let statusText = viewModel.statusDetail ?? "-"
-        debugLabel.text = """
-        DEBUG
-        phase: \(phaseText)
-        step: \(viewModel.debugStep)
-        elapsed: \(elapsed)
-        lyrics: \(lyricsText)
-        status: \(statusText)
-        suno:
-        \(viewModel.sunoDebugInfo)
-        """
+    private func updateProgressLabel() {
+        progressLabel.text = friendlyProgressText()
     }
 
-    private func phaseLabel(_ phase: GeneratingViewModel.Phase) -> String {
-        switch phase {
-        case .idle: return "idle"
-        case .gatheringContext: return "gatheringContext"
-        case .generatingLyrics: return "generatingLyrics"
-        case .requestingMusic: return "requestingMusic"
-        case .pollingMusic: return "pollingMusic"
-        case .downloadingAudio: return "downloadingAudio"
-        case .creatingNotificationAudio: return "creatingNotificationAudio"
-        case .scheduling: return "scheduling"
-        case .completed: return "completed"
-        case .failed(let message): return "failed(\(message))"
+    private func friendlyProgressText() -> String {
+        let step = viewModel.debugStep
+        if step.contains("calendar") {
+            return "캘린더 정보 읽는 중"
+        }
+        if step.contains("location") {
+            return "위치 정보 불러오는 중"
+        }
+        if step.contains("weather") {
+            return "날씨 정보 확인 중"
+        }
+        if step.contains("lyrics") {
+            return "AI가 가사 생성 중"
+        }
+        if step.contains("suno.generate") {
+            return "Suno에 알람송 요청 중"
+        }
+        if step.contains("suno.poll") {
+            return "노래가 완성되기를 기다리는 중"
+        }
+        if step.contains("suno.download") {
+            return "완성된 노래 저장 중"
+        }
+        if step.contains("audio.create-notification") {
+            return "알림용 오디오 준비 중"
+        }
+        if step.contains("schedule") {
+            return "알람 예약 중"
+        }
+        switch viewModel.phase {
+        case .idle, .gatheringContext:
+            return "알람 정보를 모으는 중"
+        case .generatingLyrics:
+            return "AI가 가사 생성 중"
+        case .requestingMusic:
+            return "Suno에 알람송 요청 중"
+        case .pollingMusic:
+            return "노래가 완성되기를 기다리는 중"
+        case .downloadingAudio:
+            return "완성된 노래 저장 중"
+        case .creatingNotificationAudio:
+            return "알림용 오디오 준비 중"
+        case .scheduling:
+            return "알람 예약 중"
+        case .completed:
+            return "알람송 준비 완료"
+        case .failed:
+            return viewModel.statusDetail ?? "생성 중 문제가 발생했어요"
         }
     }
 
-    private func elapsedText(since startedAt: Date?, now: Date) -> String {
-        guard let startedAt else { return "-" }
-        let seconds = max(0, Int(now.timeIntervalSince(startedAt)))
-        let minutes = seconds / 60
-        let remaining = seconds % 60
-        return String(format: "%02d:%02d", minutes, remaining)
-    }
 }
 
 final class AlarmDetailUIKitViewController: WakeyBaseViewController, UIScrollViewDelegate {

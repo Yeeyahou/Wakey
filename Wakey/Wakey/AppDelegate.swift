@@ -22,7 +22,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .badge]
+        await MainActor.run {
+            WakeyNotificationRouter.openAlarm(from: notification.request.content.userInfo)
+        }
+        return []
     }
 
     func userNotificationCenter(
