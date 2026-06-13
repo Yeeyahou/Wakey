@@ -1,39 +1,65 @@
 # Wakey
 
-Wakey는 사용자의 일정, 위치, 날씨, 알람 목적을 바탕으로 AI 알람송을 생성하고, 생성된 노래로 알람을 설정할 수 있는 iOS 알람 앱입니다. UIKit 기반 화면을 중심으로 동작하며, 일부 SwiftUI 화면은 보조 구현으로 남아 있습니다.
+<p align="center">
+  <img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/710d2c90-abaf-4650-a508-909a9c7516c1" />
+</p>
+Wakey는 사용자의 일정, 위치, 날씨, 메모등의 정보를 바탕으로 AI 알람송을 생성하고, 생성된 노래로 알람을 설정할 수 있는 iOS 알람 앱입니다.
 
-## 주요 기능
+## 주요 기능 및 화면
+
+- 홈화면
+  <p align="center">
+    <img width="250" height="500" alt="image" src="https://github.com/user-attachments/assets/043d3ba0-e351-4491-8dfd-ff2b911db2de" />
+  </p>
 
 - AI 알람송 생성
   - 알람 날짜, 이름, 목적, 분위기, 메모, 위치, 날씨, 캘린더 정보를 조합해 가사와 노래 제목을 생성합니다.
   - 생성된 제목과 가사를 Suno 요청에 사용해 실제 알람송 오디오를 만듭니다.
   - iOS 로컬 알림용 짧은 오디오 파일도 별도로 생성합니다.
+ <p align="center">
+    <img width="250" height="500" alt="제목 없는 디자인" src="https://github.com/user-attachments/assets/99634906-3e4d-4b77-9da3-657e6e2fad96" />
+ </p>
+
 
 - 알람 관리
   - 일반 알람과 AI 알람송 알람을 함께 관리합니다.
   - 알람 삭제와 라이브러리 삭제를 분리해, 알람만 지워도 생성된 노래는 유지할 수 있습니다.
   - 반복 요일, 다시 알림, 알람 목적, 알람 음량을 설정할 수 있습니다.
+ <p align="center">
+    <img width="250" height="500" alt="image" src="https://github.com/user-attachments/assets/d93c5f0b-b387-415d-baf8-7e763e6debb4" />
+ </p>
 
 - AI 알람송 라이브러리
   - 생성된 AI 알람송을 라이브러리에서 다시 들을 수 있습니다.
   - 저장된 AI 알람송을 일반 알람 사운드 선택 화면에서 선택할 수 있습니다.
   - 라이브러리 카드 스와이프 삭제를 지원합니다.
-
+<p align="center">
+<img width="250" height="500" alt="image" src="https://github.com/user-attachments/assets/2b7d2a35-4ba7-452c-9ebb-7937ffa79484" />
+</p>
 - 알람송 감상 화면
-  - AI가 생성한 노래 제목과 `Wakey & Suno` 작가명을 표시합니다.
+  - AI가 생성한 노래 제목을 표시합니다.
   - 앨범 커버 형태의 주황색 음표 영역을 누르면 가사를 확인할 수 있습니다.
   - 재생바, 재생/일시정지, 알람 음량 조절, 완료 동작을 제공합니다.
+ <p align="center">
+    <img width="250" height="500" alt="제목 없는 디자인 (1)" src="https://github.com/user-attachments/assets/c968d894-c169-4559-8734-d9fa735b78e8" />
+ </p>
 
 - 알람 울림 화면
   - 알림을 누르면 앱 내부의 전체 화면 알람 UI로 이동합니다.
   - 앱이 이미 포그라운드에 있을 때도 알람 화면으로 바로 전환합니다.
   - 검은 배경 위에 주황색 메쉬 그라디언트 느낌의 애니메이션을 표시합니다.
   - 다시 알림과 밀어서 끄기 동작을 제공합니다.
+<p align="center">
+<img width="250" height="500" alt="ezgif-2b99932f3d7ae8f0" src="https://github.com/user-attachments/assets/faa93265-2ed4-415c-bf3e-41c0ac61911a" />
+
+</p>
 
 - 앱 브랜딩
   - Wakey 앱 아이콘과 런치 로고를 적용했습니다.
-  - 런치 화면에는 앱 로고, `Wakey`, `나만의 AI 알람앱` 문구가 표시됩니다.
 
+ <p align="center">
+  <img width="300" height="400" alt="image" src="https://github.com/user-attachments/assets/2697af0c-b08b-4034-a4e7-608b71bfb98e" />
+ </p>
 ## 주요 코드 구조
 
 - `Wakey/Wakey/UIKit/WakeyUIKitControllers.swift`
@@ -86,29 +112,3 @@ Wakey는 사용자의 일정, 위치, 날씨, 알람 목적을 바탕으로 AI �
 5. 생성 완료 후 오디오를 저장하고, `AudioFileService`가 알림용 짧은 오디오를 만듭니다.
 6. `NotificationManager`가 로컬 알림을 예약합니다.
 7. 생성 결과 화면에서 사용자가 노래를 듣고 알람 음량을 조정할 수 있습니다.
-
-## 실행 및 개발 참고
-
-- Xcode에서 `Wakey/Wakey.xcodeproj`를 열고 `Wakey` 스킴으로 실행합니다.
-- API 키는 코드에 직접 들어갈 수 있으므로 외부 공개 저장소에 올릴 때 반드시 제거해야 합니다.
-- iOS 로컬 알림의 커스텀 사운드는 길이와 저장 위치 제약이 있어, 앱 내부 재생용 원본 오디오와 알림용 짧은 오디오를 분리합니다.
-- 백그라운드나 잠금화면에서는 애플 정책상 앱이 임의의 전체 화면 UI를 직접 띄울 수 없으므로, 로컬 알림을 누른 뒤 앱 내부 알람 화면으로 이동하는 구조를 사용합니다.
-
-## 빌드 확인
-
-최근 확인 명령:
-
-```bash
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
-  -project Wakey/Wakey.xcodeproj \
-  -scheme Wakey \
-  -sdk iphonesimulator \
-  -destination 'generic/platform=iOS Simulator' \
-  -derivedDataPath /tmp/WakeyStoryboardDerived \
-  CODE_SIGNING_ALLOWED=NO build
-```
-
-현재 알려진 경고:
-
-- 일부 AppIcon dark/tinted 에셋이 asset catalog에서 unassigned child 경고를 낼 수 있습니다.
-- Swift 6 언어 모드에서는 재생 진행 업데이트 클로저 캡처 경고가 에러로 승격될 수 있습니다.
